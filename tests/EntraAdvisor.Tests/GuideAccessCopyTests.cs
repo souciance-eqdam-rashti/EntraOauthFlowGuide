@@ -20,6 +20,13 @@ public sealed class GuideAccessCopyTests
         var guide=new ArchitectureGuideGenerator().Generate(plan,new([]));
         var access=guide.Steps.Single(s=>s.Id=="expose-api");
         Assert.StartsWith(explanation,Assert.IsType<InstructionContent>(access.Content[0]).Text);
+        var validation=guide.Steps.Single(s=>s.Id=="configure-api").Content.OfType<InstructionContent>().ToArray();
+        Assert.Contains(validation,i=>i.Title=="Validate incoming access tokens");
+        Assert.Contains(validation,i=>i.Title=="Check the audience" && i.Text.Contains("`aud`"));
+        Assert.Equal(users,validation.Any(i=>i.Title=="Enforce the required scope"));
+        Assert.Equal(applications,validation.Any(i=>i.Title=="Enforce the required app role"));
+        var markdown=new MarkdownGuideExporter().ExportMarkdown(guide);
+        Assert.All(validation,i=> { Assert.Contains(i.Title,markdown); Assert.Contains(i.Text,markdown); });
         Assert.Equal(users,access.Content.OfType<ConfigurationRowsContent>().Any(p=>p.Breadcrumbs.Contains("Expose an API")));
         Assert.Equal(applications,access.Content.OfType<PortalActionContent>().Any(p=>p.Breadcrumbs.Contains("App roles")));
         if(users) {

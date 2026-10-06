@@ -154,3 +154,5 @@ main.implement-page{background:var(--mud-palette-background)!important}
 .configuration-value{min-width:0}.step-header-meta{display:flex;align-items:center;flex-wrap:wrap;gap:12px}.step-header-meta>.eyebrow{margin:0}.step-header-meta{margin-bottom:8px}.step-header-meta .mud-chip{margin:0}.instruction-action-body pre{border-radius:8px;margin:0;max-width:100%;overflow:auto}
 
 .configuration-guidance{color:var(--mud-palette-text-primary)!important;font-size:16px!important;line-height:1.6!important}.technical-setting{font-family:Consolas,monospace}
+
+.implementation-actions>.implementation-action+.implementation-action{margin-top:0}

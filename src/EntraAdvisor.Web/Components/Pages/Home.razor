@@ -8,7 +8,7 @@
 <main class="@(W.Stage == JourneyStage.Implement ? "implement-page" : "")">
 <nav aria-label="Journey"><MudTabs ActivePanelIndex="@((int)W.Stage)" ActivePanelIndexChanged="index => Navigate((JourneyStage)index)" Elevation="0" Rounded="true" Class="journey-tabs"><MudTabPanel Text="Design" Icon="@Icons.Material.Outlined.Tune" /><MudTabPanel Text="Implement" Icon="@Icons.Material.Outlined.Code" Disabled="@(W.Session.Evaluation.Plan is null)" /></MudTabs></nav>
 <div class="workspace choosing-topology"><section class="work-panel">
-<p class="eyebrow">@W.Stage · Enterprise Entra identities</p><h1 tabindex="-1" @ref="heading">@Title</h1><p role="status" class="feedback">@message</p>
+<p class="eyebrow">@W.Stage · Enterprise Entra identities</p><h1 tabindex="-1" @ref="heading">@Title</h1>@if(!string.IsNullOrEmpty(message)) { <p role="status" class="sr-only">@message</p> }
 @if(W.Stage == JourneyStage.Design) {
  if(!W.Started) {
  <p>Select a card to continue to the design questions. Your implementation guide appears once those questions are answered.</p><fieldset><legend>What are you building?</legend><MudRadioGroup T="string" ValueChanged="SelectPreset" Class="choices topology-options">@foreach(var p in TopologyPresets.All) { <MudPaper Outlined="true" Elevation="0" Class="topology-option"><MudRadio T="string" Value="@p.Id" Color="Color.Primary"><span class="choice-body"><strong>@p.Title</strong><span>@p.Description</span><span class="use-case">Example: @p.Example</span><span class="card-action">Select and continue →</span></span></MudRadio></MudPaper> }</MudRadioGroup></fieldset>
@@ -70,7 +70,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  private void SelectPreset(string id) { if(W.Started) return; W.ChoosePreset(id); history.Clear(); drafts.Clear(); Start(); }
  private void Start() { W.Started=true; screen=W.Session.NextScreen; focus=true; }
  private void Continue() { if(screen is null) return; var prior=screen; foreach(var q in prior.Questions) if(Selected(q.Id) is {} value && QuestionCatalog.IsRelevant(q,W.Session.Scenario)) message=DescribeChange(W.Apply(new(q.Id,[value]))); history.Push(prior); drafts.Clear(); screen=W.Session.NextScreen; if(W.Session.Evaluation.Plan is not null) { Generate(); } focus=true; }
- private string DescribeChange(AnswerChangeImpact impact) => W.Guide is null ? "Answers saved." : impact.Explanation;
+ private string DescribeChange(AnswerChangeImpact impact) => W.Guide is null ? "" : impact.Explanation;
  private void Back() { if(history.TryPop(out var prior)) { screen=prior; drafts.Clear(); } else { W.Started=false; } message=""; focus=true; }
  private void Edit(QuestionDefinition q) { W.Stage=JourneyStage.Design; screen=new(q.Section,[q]); drafts.Clear(); focus=true; }
  private void Navigate(JourneyStage stage) { if(stage == JourneyStage.Implement && !W.GuideIsCurrent) { Generate(); return; } W.Stage=stage; screen=W.Session.NextScreen; focus=true; message=""; }
@@ -88,6 +88,5 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  private void Reset() { W.Reset(); history.Clear(); drafts.Clear(); screen=W.Session.NextScreen; message=""; focus=true; }
  private async Task OpenDiagram() { if(W.Guide is null) return; await Dialogs.ShowAsync<DiagramOverviewDialog>("Diagram Overview", new DialogParameters { [nameof(DiagramOverviewDialog.Plan)] = W.Guide.Architecture }, new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true }); }
  private async Task CloseDiagram() => await JS.InvokeVoidAsync("advisor.closeDiagram");
- private async Task Copy(string value) { try { await JS.InvokeVoidAsync("advisor.copy",value); message="Copied to clipboard."; } catch(JSException) { message="Clipboard unavailable. Select and copy the displayed text."; } }
  private async Task Export() { if(!W.GuideIsCurrent) return; var text=new MarkdownGuideExporter().ExportMarkdown(W.Guide!);  try { await JS.InvokeVoidAsync("advisor.download","entra-implementation-guide.md",text); message=""; } catch(JSException) { message="Download could not start. Please try again."; } }
 }

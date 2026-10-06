@@ -11,10 +11,10 @@
    <ImplementationAction Title="@portal.Title" Path="@PortalPath(portal.Breadcrumbs)"><p>@portal.Action</p></ImplementationAction>
    break;
   case InstructionContent:
-   <ImplementationAction Title="@GroupTitle(group)" Path="@((group[0] as InstructionContent)!.Location)" PathLabel="@((group[0] as InstructionContent)!.LocationLabel)">@foreach(var instruction in group.Cast<InstructionContent>()) { <p>@instruction.Text</p> }</ImplementationAction>
+   <ImplementationAction Title="@GroupTitle(group)" Path="@InstructionPath(group[0])" PathLabel="@((group[0] as InstructionContent)!.LocationLabel)">@foreach(var instruction in group.Cast<InstructionContent>()) { <InstructionText Text="@instruction.Text"/> }</ImplementationAction>
    break;
   case ConfigurationRowsContent rows:
-   <ImplementationAction Title="@rows.Title" Path="@PortalPath(rows.Breadcrumbs)"><div class="configuration-rows">@foreach(var value in rows.Values) { <ConfigurationValueRow Value="value" CanCopy="@(value.CanCopy && value.Kind != GuideValueKind.Derived)" /> }</div><p>@rows.Instruction</p></ImplementationAction>
+   <ImplementationAction Title="@rows.Title" Path="@PortalPath(rows.Breadcrumbs)"><div class="configuration-rows">@foreach(var value in rows.Values) { <ConfigurationValueRow Value="value" /> }</div><p>@rows.Instruction</p></ImplementationAction>
    break;
   case CodeContent snippet:
    <ImplementationAction Title="@(snippet.Artifact.ExecutionLocation is not null ? "Run the commands" : "Apply the code")" Path="@(new[] { snippet.Artifact.ExecutionLocation ?? snippet.Artifact.DestinationFile })" PathLabel="@(snippet.Artifact.ExecutionLocation is null ? "File location" : "Execution location")"><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre></ImplementationAction>
@@ -29,6 +29,11 @@
 @code {
  [Parameter,EditorRequired] public GuideStep Step {get;set;}=null!;
  [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
+ private IReadOnlyList<string> InstructionPath(GuideContent content) {
+  var instruction=(InstructionContent)content;
+  var index=Step.Content.IndexOf(content);
+  return index>0 && Step.Content[index-1] is InstructionContent previous && previous.Location.SequenceEqual(instruction.Location) ? Array.Empty<string>() : instruction.Location;
+ }
  private string ComponentName => Plan.Scenario.Components.First(c=>c.Id==Step.ComponentId).Name;
  private IEnumerable<List<GuideContent>> Groups() {
   var groups=new List<List<GuideContent>>();

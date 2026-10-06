@@ -299,3 +299,6 @@ Introduced shared location strips, action sections, value rows and neutral expec
 
 ## Consistent configuration and verification steps
 Converted client/tenant ID guidance to reference-only instructions with the shared Entra location strip, removing synthetic placeholder rows and copy controls. Application configuration and flow verification now include typed location strips and shared action/outcome sections. Applied reference-only ID treatment to specialized guides and aligned Markdown export. Verified steps 6, 7 and 8 on desktop and 390px mobile: no copy buttons, no value-row boxes, no page overflow. All 105 tests pass, with preset-wide reference-only ID assertions.
+
+## Focused instructions without copy controls
+Removed the saved-answer banner and all implementation copy controls. Split token validation, audience and scenario-specific scope/role enforcement into titled sections; applied focused sections to sign-in, acquisition, verification, cross-tenant setup, certificates and specialized chain diagnostics. Technical terms render as inline code with Razor encoding. Avoid repeated location strips and doubled action spacing. Markdown exports retain the same authored sections. Audience guidance checked against Microsoft Learn access-token claims reference. All 105 tests pass, including delegated/application/mixed enforcement checks.

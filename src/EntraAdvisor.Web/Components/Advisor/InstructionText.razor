@@ -1,0 +1,5 @@
+<p>@for(var i=0;i<Parts.Length;i++) { if(i%2==1) { <code>@Parts[i]</code> } else { @Parts[i] } }</p>
+@code {
+ [Parameter,EditorRequired] public string Text {get;set;}="";
+ private string[] Parts => Text.Split('`');
+}
