@@ -20,7 +20,7 @@ public sealed class GuideAccessCopyTests
         var guide=new ArchitectureGuideGenerator().Generate(plan,new([]));
         var access=guide.Steps.Single(s=>s.Id=="expose-api");
         Assert.StartsWith(explanation,Assert.IsType<InstructionContent>(access.Content[0]).Text);
-        Assert.Equal(users,access.Content.OfType<PortalActionContent>().Any(p=>p.Breadcrumbs.Contains("Expose an API")));
+        Assert.Equal(users,access.Content.OfType<ConfigurationRowsContent>().Any(p=>p.Breadcrumbs.Contains("Expose an API")));
         Assert.Equal(applications,access.Content.OfType<PortalActionContent>().Any(p=>p.Breadcrumbs.Contains("App roles")));
         Assert.DoesNotContain(access.Content,c=>c is CopyableValueContent);
         Assert.DoesNotContain(access.Content.OfType<InstructionContent>(),c=>c.Text.Contains("Record the API"));

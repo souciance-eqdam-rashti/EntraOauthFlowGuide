@@ -93,10 +93,14 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             var choice = userAccess && appAccess
                 ? "Use both: scopes limit calls made for a signed-in user; app roles permit calls made by an application without a user. This API accepts both identities."
                 : userAccess
-                    ? "Use scopes: they describe what a caller may do for a signed-in user. This API receives user-delegated calls, so application permissions are not needed for this scenario."
+                    ? "Use scopes: callers access this API on behalf of the signed-in user. Define scopes to control which operations they can perform. Application permissions are not needed for this scenario."
                     : "Use app roles: they describe what an application may do without a signed-in user. This API receives application calls, so delegated scopes are not needed for this scenario.";
             var content = new List<GuideContent> { Text(choice) };
-            if (userAccess) content.Add(Portal("Set Application ID URI to api://<backend-client-id>; add and enable a scope such as Orders.Read or Orders.Write with its consent description.", "API app registration", "Expose an API"));
+            if (userAccess) content.Add(new ConfigurationRowsContent("Configure the API identifier and scope", ["App registrations", name, "Expose an API"], [
+                new(validation.ComponentId + ".applicationIdUri", "Application ID URI", "api://<backend-client-id>", GuideValueKind.DeveloperSupplied, "Replace <backend-client-id> with this API registration’s client ID."),
+                new(validation.ComponentId + ".scope", "Scope name", "Orders.Read", GuideValueKind.Sample, "Example only; no scope has been selected by this guide. Choose the operation your API will enforce, e.g. Orders.Read or Orders.Write."),
+                new(validation.ComponentId + ".scopeState", "Scope state", "Enabled", GuideValueKind.Derived, "")
+            ], "Add the scope and provide the consent name and description requested by Entra."));
             if (appAccess) content.Add(Portal("Add a least-privilege role such as Orders.Read.All with Applications as an allowed member type.", "API app registration", "App roles"));
             Add("expose-" + validation.ComponentId, GuideSection.ResourceRegistration, "Define access for " + name, validation.ComponentId,
                 "Define the scopes or roles this API accepts.", "The API registration exposes the authorization values its callers need.", content, [expose, roles]);

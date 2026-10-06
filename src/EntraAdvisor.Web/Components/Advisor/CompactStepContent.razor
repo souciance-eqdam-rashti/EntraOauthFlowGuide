@@ -10,6 +10,9 @@
   case InstructionContent instruction:
    <ImplementationAction Title="@InstructionTitle(instruction.Text)"><p>@instruction.Text</p></ImplementationAction>
    break;
+  case ConfigurationRowsContent rows:
+   <ImplementationAction Title="@rows.Title" Path="rows.Breadcrumbs" PathLabel="Open in Entra"><div class="configuration-rows">@foreach(var value in rows.Values) { <ConfigurationValueRow Value="value" CanCopy="@(value.Kind != GuideValueKind.Derived)" /> }</div><p>@rows.Instruction</p></ImplementationAction>
+   break;
   case CodeContent snippet:
    <ImplementationAction Title="@($"Update {snippet.Artifact.DestinationFile}")"><MudExpansionPanels Elevation="0" Class="quiet-disclosures"><MudExpansionPanel Expanded="true" Text="@($"View {snippet.Artifact.Language} code")"><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre></MudExpansionPanel></MudExpansionPanels></ImplementationAction>
    break;
@@ -27,7 +30,9 @@
  };
  private string InstructionTitle(string text) => text switch {
   var t when t.StartsWith("You need") => "Required administrator role",
-  var t when t.StartsWith("Use scopes") || t.StartsWith("Use app roles") || t.StartsWith("Use both") => "Choose the access model",
+  var t when t.StartsWith("Use scopes") => "Use delegated permissions",
+  var t when t.StartsWith("Use app roles") => "Use application permissions",
+  var t when t.StartsWith("Use both") => "Use delegated and application permissions",
   var t when t.StartsWith("Validate") => "Validate and authorize tokens",
   var t when t.StartsWith("Send") => "Call the target API",
   var t when t.Contains("on-behalf-of") => "Acquire the downstream token",

@@ -131,3 +131,14 @@ main.implement-page{display:block!important;overflow:visible!important;padding:2
 
 .quiet-disclosures .mud-expand-panel-header:focus{outline:2px solid var(--mud-palette-primary)!important;outline-offset:2px;border-radius:4px}
 
+
+/* Stronger surfaces and readable action hierarchy. */
+body{background:var(--mud-palette-background)!important}.implement-page .implementation-step-pane{box-shadow:0 3px 14px rgb(23 43 77 / 6%)!important;border-color:var(--mud-palette-divider)}
+.implementation-actions{gap:24px}.implementation-action .action-title{font-size:18px!important;font-weight:600!important}.implementation-step-pane .implementation-action p,.configuration-guidance{font-size:16px;line-height:1.6!important}.implementation-step-pane .action-path{font-size:14px!important;color:var(--mud-palette-text-secondary)}
+.quiet-disclosures .mud-expand-panel-header{font-size:16px;font-weight:500;color:var(--mud-palette-text-primary);border:0;border-radius:0;outline:none!important}.quiet-disclosures .mud-expand-panel-header:focus{outline:none!important}.quiet-disclosures .mud-expand-panel-header:focus-visible{outline:2px solid var(--mud-palette-primary)!important;outline-offset:2px}.quiet-disclosures .mud-expand-panel-icon{width:18px;height:18px}
+.configuration-rows{display:flex;flex-direction:column;gap:8px;margin:12px 0}.configuration-rows .configuration-row{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(0,1fr);gap:12px;align-items:center}.configuration-rows .configuration-value{margin:0}.configuration-rows .configuration-guidance{font-size:13px;margin:0!important}.configuration-rows .configuration-label .mud-typography-caption{font-size:11px}
+.implementation-stepper .mud-step-label{padding:4px 6px!important;min-height:38px!important}.implementation-stepper .mud-step-label-content-title{font-size:12px}.implementation-stepper .mud-stepper-nav-connector{flex-basis:10px;min-width:10px}.implementation-stepper .mud-step-label-content{margin-left:6px}.implementation-stepper .mud-stepper-nav{scrollbar-width:thin}
+@media(max-width:600px){.configuration-rows .configuration-row{grid-template-columns:1fr}.implementation-action .action-title{font-size:17px!important}}
+
+main.implement-page{background:var(--mud-palette-background)!important}
+.implementation-stepper .mud-step{padding:4px!important}

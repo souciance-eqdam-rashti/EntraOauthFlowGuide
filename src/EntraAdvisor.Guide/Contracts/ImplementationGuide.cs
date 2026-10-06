@@ -22,6 +22,7 @@ public abstract record GuideContent;
 public sealed record InstructionContent(string Text) : GuideContent;
 public sealed record PortalActionContent(ImmutableArray<string> Breadcrumbs, string Action) : GuideContent;
 public sealed record CopyableValueContent(GuideValue Value) : GuideContent;
+public sealed record ConfigurationRowsContent(string Title, ImmutableArray<string> Breadcrumbs, ImmutableArray<GuideValue> Values, string Instruction) : GuideContent;
 public sealed record CodeContent(CodeArtifact Artifact) : GuideContent;
 public sealed record ExplanationContent(string Title, string Text) : GuideContent;
 

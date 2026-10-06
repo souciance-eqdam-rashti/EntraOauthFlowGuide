@@ -24,7 +24,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  <section class="implementation-step-selector" aria-label="Implementation steps">
  <MudText Typo="Typo.overline" Class="stepper-heading">IMPLEMENTATION JOURNEY</MudText>
  <MudStepper @key="guide.PlanId" Vertical="false" NonLinear="true" ScrollableNavigation="true" ActiveIndex="W.ActiveStep" ActiveIndexChanged="SelectStep" Class="implementation-stepper">
- <ChildContent>@foreach(var item in guide.Steps) { <MudStep Title="@item.Title" /> }</ChildContent>
+ <ChildContent>@foreach(var item in guide.Steps) { <MudStep Title="@JourneyLabel(item)" /> }</ChildContent>
  <ActionContent></ActionContent>
  </MudStepper>
 
@@ -37,7 +37,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  <div class="step-completion">
  <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CompleteStep">@(W.ActiveStep+1 < guide.Steps.Length ? "Mark complete and continue" : "Mark complete")</MudButton>
  @if(W.ActiveStep+1 < guide.Steps.Length) { <MudText Typo="Typo.caption">Next: @guide.Steps[W.ActiveStep+1].Title</MudText> }
- <MudText Typo="Typo.caption">Your confirmation; Entra configuration is not automatically verified.</MudText>
+
  @if(W.Completion[W.ActiveStep].State == CompletionState.Complete) { <p role="status">You marked this step complete.</p> }
  </div></article></MudPaper>
 
@@ -73,6 +73,14 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  private void Navigate(JourneyStage stage) { if(stage == JourneyStage.Implement && !W.GuideIsCurrent) { Generate(); return; } W.Stage=stage; screen=W.Session.NextScreen; focus=true; message=""; }
  private void Generate() { message=""; W.SetGuide(new ArchitectureGuideGenerator().Generate(W.Session.Evaluation.Plan!,new([]))); focus=true; }
  private void SelectStep(int i) { if(W.Stage != JourneyStage.Implement || !W.GuideIsCurrent || W.Guide is null || i < 0 || i >= W.Guide.Steps.Length) return; W.SelectStep(i); focusStep=true; }
+ private string JourneyLabel(GuideStep step) {
+ var name=Name(step.ComponentId) switch { "Backend API" => "API", "Browser App" => "browser app", "Downstream API" => "downstream API", "Web App" => "web app", var n => n };
+ if(step.Id.StartsWith("register")) return "Register " + name;
+ if(step.Id.StartsWith("configure")) return "Configure " + name;
+ if(step.Id.StartsWith("expose")) return step.Content.OfType<InstructionContent>().Any(c=>c.Text.StartsWith("Use scopes:")) ? "Define scopes" : "Define access";
+ if(step.Id.StartsWith("permission")) return "Grant access";
+ return step.Section switch { GuideSection.Prerequisites => "Prepare tenant", GuideSection.PermissionsAndConsent => "Grant access", GuideSection.TestAndTroubleshoot => "Verify flow", _ => step.Title.Replace("Create and upload two development certificates", "Certificates").Replace("Create the three projects", "Create projects").Replace("Build and run the chain", "Run chain") };
+ }
  private void CompleteStep() { W.SetCompletion(CompletionState.Complete); if(W.Guide is {} g && W.ActiveStep+1 < g.Steps.Length) SelectStep(W.ActiveStep+1); }
  private void Reset() { W.Reset(); history.Clear(); drafts.Clear(); screen=W.Session.NextScreen; message=""; focus=true; }
  private async Task OpenDiagram() { if(W.Guide is null) return; await Dialogs.ShowAsync<DiagramOverviewDialog>("Diagram Overview", new DialogParameters { [nameof(DiagramOverviewDialog.Plan)] = W.Guide.Architecture }, new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true }); }
