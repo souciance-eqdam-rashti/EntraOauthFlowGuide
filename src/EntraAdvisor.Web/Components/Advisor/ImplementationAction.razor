@@ -1,0 +1,10 @@
+<section class="implementation-action">
+<MudText Typo="Typo.subtitle2" Class="action-title">@Title</MudText>
+@if(Path.Count > 0) { <p class="action-path">@string.Join(" › ",Path)</p> }
+@ChildContent
+</section>
+@code {
+ [Parameter, EditorRequired] public string Title {get;set;}="";
+ [Parameter] public IReadOnlyList<string> Path {get;set;}=Array.Empty<string>();
+ [Parameter] public RenderFragment? ChildContent {get;set;}
+}

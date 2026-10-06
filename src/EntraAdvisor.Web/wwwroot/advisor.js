@@ -3,6 +3,7 @@ window.advisor = {
  closeDiagram: () => document.getElementById('diagram-overview').close(),
  resetStepPane: () => { document.getElementById('implementation-step-pane').scrollTop = 0; },
  copy: async text => {
+   if(navigator.clipboard) { try { await navigator.clipboard.writeText(text); return; } catch { /* Fall back for embedded browsers. */ } }
    // Synchronous fallback also works in embedded browsers without Clipboard API support.
    const area=document.createElement('textarea'); area.value=text; area.style.position='fixed'; area.style.opacity='0'; document.body.append(area);
    const prior=document.activeElement; area.select(); let copied=false;

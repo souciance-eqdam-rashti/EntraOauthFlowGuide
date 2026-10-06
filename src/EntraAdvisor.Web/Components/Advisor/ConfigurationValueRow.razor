@@ -1,0 +1,13 @@
+@inject IJSRuntime JS
+<div class="configuration-row">
+ <div class="configuration-label"><MudText Typo="Typo.subtitle2">@Value.Label</MudText><MudText Typo="Typo.caption" Color="Color.Default">@KindLabel</MudText></div>
+ <div class="configuration-value"><code>@Value.Value</code><MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" Size="Size.Small" OnClick="Copy" aria-label="@($"Copy {Value.Label} {KindLabel.ToLowerInvariant()}")" /></div>
+</div>
+<p class="configuration-guidance">@Value.Guidance</p>
+<p role="status" aria-live="polite" class="copy-feedback">@feedback</p>
+@code {
+ [Parameter, EditorRequired] public GuideValue Value {get;set;}=null!;
+ private string feedback="";
+ private string KindLabel => Value.Kind switch { GuideValueKind.DeveloperSupplied => "Placeholder — replace with your Entra value", GuideValueKind.Sample => "Example — choose for your application", _ => "Scenario value" };
+ private async Task Copy() { try { await JS.InvokeVoidAsync("advisor.copy",Value.Value); feedback=Value.Label+" copied."; } catch(JSException) { feedback="Copy unavailable. Select the value to copy it."; } }
+}

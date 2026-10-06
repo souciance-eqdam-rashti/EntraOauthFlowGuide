@@ -287,3 +287,6 @@ Removed value-guidance boxes, shortened configuration actions, added explicit co
 
 ## MudBlazor UI preview
 Replaced Fluent UI infrastructure with MudBlazor 9.11.0. Added theme, app bar, journey tabs, radio choices, export buttons and diagram dialog. Implementation uses a freely selectable vertical MudStepper above its selected-step summary in the right pane, with instructions on the left. Verified step selection, questionnaire and dialog in browser; the 1280x720 implementation viewport fits all export buttons and summary. Build clean and 105 regression tests passed.
+
+## Polished content-sized implementation cards
+Added reusable action groups and model-backed configuration rows with explicit placeholder/example labels and accessible copy feedback. Cards use an 880px maximum width, natural height and theme-token styling. Optional explanations and documentation use disclosures; required instructions and code remain visible. Completion uses the existing workspace confirmation state and advances to the next ordered step. No decision-engine or guide-generation changes. Verified short and code-heavy cards at desktop and 390px mobile, no page overflow, exact clipboard contents, keyboard disclosure expansion, and completion persistence. All 105 existing tests passed.

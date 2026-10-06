@@ -1,9 +1,5 @@
 @using EntraAdvisor.Guide
-<section class="step-resources" aria-label="Microsoft Learn resources">
-<MudDivider />
-<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="resource-heading"><MudIcon Icon="@Icons.Material.Outlined.MenuBook" Size="Size.Small" Color="Color.Primary" /><MudText Typo="Typo.subtitle2">Microsoft Learn resources</MudText></MudStack>
-<div class="resource-links">@foreach(var source in Sources) { <MudButton Variant="Variant.Text" Color="Color.Primary" Href="@source.Url.ToString()" Target="_blank" EndIcon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small">@source.Title</MudButton> }</div>
-</section>
+<MudExpansionPanels Elevation="0" Class="quiet-disclosures step-documentation"><MudExpansionPanel Text="Documentation"><div class="resource-links">@foreach(var source in Sources) { <MudLink Href="@source.Url.ToString()" Target="_blank" Typo="Typo.body2">@source.Title ↗</MudLink> }</div></MudExpansionPanel></MudExpansionPanels>
 @code {
  [Parameter, EditorRequired] public GuideStep Step {get;set;}=null!;
  [Parameter, EditorRequired] public OAuthPlan Plan {get;set;}=null!;

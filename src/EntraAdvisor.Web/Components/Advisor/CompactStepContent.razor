@@ -1,28 +1,45 @@
-@using EntraAdvisor.Guide.Contracts
-<ol class="step-instructions @(Step.Content.Length == 1 ? "single-instruction" : "")">
+<div class="implementation-actions">
 @foreach(var content in Step.Content) {
-    <li>
-    @switch(content) {
-        case CopyableValueContent value:
-            <div class="value-guidance"><strong>@value.Value.Label</strong><p>@value.Value.Guidance</p></div>
-            break;
-        case PortalActionContent portal:
-            <p class="breadcrumbs">@string.Join(" → ",portal.Breadcrumbs)</p><p>@portal.Action</p>
-            break;
-        case InstructionContent instruction:
-            <p>@instruction.Text</p>
-            break;
-        case CodeContent snippet:
-            <details class="step-code"><summary>@snippet.Artifact.DestinationFile · @snippet.Artifact.Language</summary><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre></details>
-            break;
-        case ExplanationContent explanation:
-            <details class="step-detail"><summary>@explanation.Title</summary><p>@explanation.Text</p></details>
-            break;
-    }
-    </li>
+ @switch(content) {
+  case CopyableValueContent value:
+   <ConfigurationValueRow @key="value.Value.Key" Value="value.Value" />
+   break;
+  case PortalActionContent portal:
+   <ImplementationAction Title="@PortalTitle(portal)" Path="portal.Breadcrumbs"><p>@portal.Action</p></ImplementationAction>
+   break;
+  case InstructionContent instruction:
+   <ImplementationAction Title="@InstructionTitle(instruction.Text)"><p>@instruction.Text</p></ImplementationAction>
+   break;
+  case CodeContent snippet:
+   <ImplementationAction Title="@($"Update {snippet.Artifact.DestinationFile}")"><MudExpansionPanels Elevation="0" Class="quiet-disclosures"><MudExpansionPanel Expanded="true" Text="@($"View {snippet.Artifact.Language} code")"><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre></MudExpansionPanel></MudExpansionPanels></ImplementationAction>
+   break;
+  case ExplanationContent explanation:
+   <MudExpansionPanels Elevation="0" Class="quiet-disclosures"><MudExpansionPanel Text="Why this setting?"><MudText Typo="Typo.subtitle2">@explanation.Title</MudText><p>@explanation.Text</p></MudExpansionPanel></MudExpansionPanels>
+   break;
+ }
 }
-</ol>
+</div>
 @code {
-    [Parameter,EditorRequired] public GuideStep Step {get;set;}=null!;
-    [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
+ [Parameter,EditorRequired] public GuideStep Step {get;set;}=null!;
+ [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
+ private static string PortalTitle(PortalActionContent p) => p.Breadcrumbs.LastOrDefault() switch {
+  "New registration" => "Register the application", "Authentication" => "Configure the platform", "Expose an API" => "Expose API access", "Certificates" => "Upload the public certificate", "Federated credentials" => "Configure workload trust", "Add a permission" => "Select permissions", "API permissions" => "Grant consent", _ => "Configure in Entra"
+ };
+ private string InstructionTitle(string text) => text switch {
+  var t when t.StartsWith("You need") => "Required administrator role",
+  var t when t.StartsWith("Use scopes") || t.StartsWith("Use app roles") || t.StartsWith("Use both") => "Choose the access model",
+  var t when t.StartsWith("Validate") => "Validate and authorize tokens",
+  var t when t.StartsWith("Send") => "Call the target API",
+  var t when t.Contains("on-behalf-of") => "Acquire the downstream token",
+  var t when t.StartsWith("Test") => "Check allowed and denied access",
+  var t when t.StartsWith("For multi-tenant") => "Test organization and guest access",
+  var t when t.StartsWith("For guest") => "Configure guest access",
+  var t when t.StartsWith("Assign") => "Assign resource access",
+  var t when t.StartsWith("In the resource tenant") => "Configure the resource tenant",
+  var t when t.StartsWith("Use an organizational") => "Configure organization access",
+  var t when t.StartsWith("Set the registered") => "Configure sign-in",
+  var t when t.StartsWith("Use the host-provided") => "Enable managed identity",
+  var t when t.StartsWith("Acquire") || t.StartsWith("Use the platform") || t.StartsWith("Display") => "Acquire the access token",
+  _ => Step.Section == GuideSection.Prerequisites ? "Prepare the tenant" : "Configure the application"
+ };
 }

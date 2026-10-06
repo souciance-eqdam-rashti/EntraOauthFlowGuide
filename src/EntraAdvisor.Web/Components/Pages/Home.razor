@@ -29,11 +29,17 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  </MudStepper>
 
  </section>
- <section class="implementation-step-pane" aria-label="Selected implementation step" id="implementation-step-pane">
+ <MudPaper Outlined="true" Elevation="0" Class="implementation-step-pane" role="region" aria-label="Selected implementation step" id="implementation-step-pane">
  <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId" ShowLinks="false"/> }
  <CompactStepContent Step="step" Plan="guide.Architecture"/>
  
- </article><StepResources Step="step" Plan="guide.Architecture" /></section>
+ <StepResources Step="step" Plan="guide.Architecture" />
+ <div class="step-completion">
+ <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CompleteStep">@(W.ActiveStep+1 < guide.Steps.Length ? "Mark complete and continue" : "Mark complete")</MudButton>
+ @if(W.ActiveStep+1 < guide.Steps.Length) { <MudText Typo="Typo.caption">Next: @guide.Steps[W.ActiveStep+1].Title</MudText> }
+ <MudText Typo="Typo.caption">Your confirmation; Entra configuration is not automatically verified.</MudText>
+ @if(W.Completion[W.ActiveStep].State == CompletionState.Complete) { <p role="status">You marked this step complete.</p> }
+ </div></article></MudPaper>
 
  </div>
  <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"><MudButton Variant="Variant.Outlined" OnClick="Export" StartIcon="@Icons.Material.Outlined.FileDownload">Export Markdown</MudButton><MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OpenDiagram" StartIcon="@Icons.Material.Outlined.AccountTree">Diagram Overview</MudButton></ValidationExport>
@@ -67,6 +73,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  private void Navigate(JourneyStage stage) { if(stage == JourneyStage.Implement && !W.GuideIsCurrent) { Generate(); return; } W.Stage=stage; screen=W.Session.NextScreen; focus=true; message=""; }
  private void Generate() { message=""; W.SetGuide(new ArchitectureGuideGenerator().Generate(W.Session.Evaluation.Plan!,new([]))); focus=true; }
  private void SelectStep(int i) { if(W.Stage != JourneyStage.Implement || !W.GuideIsCurrent || W.Guide is null || i < 0 || i >= W.Guide.Steps.Length) return; W.SelectStep(i); focusStep=true; }
+ private void CompleteStep() { W.SetCompletion(CompletionState.Complete); if(W.Guide is {} g && W.ActiveStep+1 < g.Steps.Length) SelectStep(W.ActiveStep+1); }
  private void Reset() { W.Reset(); history.Clear(); drafts.Clear(); screen=W.Session.NextScreen; message=""; focus=true; }
  private async Task OpenDiagram() { if(W.Guide is null) return; await Dialogs.ShowAsync<DiagramOverviewDialog>("Diagram Overview", new DialogParameters { [nameof(DiagramOverviewDialog.Plan)] = W.Guide.Architecture }, new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true }); }
  private async Task CloseDiagram() => await JS.InvokeVoidAsync("advisor.closeDiagram");
