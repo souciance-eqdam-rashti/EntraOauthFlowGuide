@@ -42,7 +42,7 @@ public sealed class DelegatedChainGuideGenerator : IGuideGenerator
         var steps = new List<GuideStep>();
         void Add(string id, GuideSection section, string title, string component, string action, string expected, params GuideContent[] content) => steps.Add(new() {
             Id=id, Section=section, Title=title, ComponentId=component, Purpose=action, Action=action, ExpectedResult=expected,
-            DependsOnStepIds=steps.Count == 0 ? [] : [steps[^1].Id], RelatedRelationshipIds=[first.RelationshipId,second.RelationshipId], Content=content.ToImmutableArray(), Sources=SourcesFor(section,sources)
+            DependsOnStepIds=steps.Count == 0 ? [] : [steps[^1].Id], RelatedRelationshipIds=[first.RelationshipId,second.RelationshipId], Content=content.Select(c => c is CodeContent code && code.Artifact.Id is "certs" or "run" ? new CodeContent(code.Artifact with { ExecutionLocation = code.Artifact.Id == "certs" ? "Local PowerShell terminal · account running the samples" : "Local terminal · common sample directory" }) : c).ToImmutableArray(), Sources=SourcesFor(section,sources)
         });
         GuideContent Text(string s) => new InstructionContent(s);
         GuideContent Portal(string action, params string[] path) => new PortalActionContent(path.ToImmutableArray(),action);
@@ -51,7 +51,10 @@ public sealed class DelegatedChainGuideGenerator : IGuideGenerator
             Text(TenantPreparation.Roles(validatedPlan)));
         foreach(var entry in new[] {(Id:apiB,Label:validatedPlan.Scenario.Components.Single(c=>c.Id==apiB).Name,Placeholder:"__API_B_CLIENT_ID__",Scope:"__API_B_SCOPE__"),(Id:apiA,Label:validatedPlan.Scenario.Components.Single(c=>c.Id==apiA).Name,Placeholder:"__API_A_CLIENT_ID__",Scope:"__API_A_SCOPE__")})
             Add("register-"+entry.Id,GuideSection.ResourceRegistration,"Register application for "+entry.Label,entry.Id,"Create a single-tenant API registration and define its delegated scope.","A new registration exposes one enabled delegated scope and requests v2 access tokens.",
-                Portal("Create a single-tenant API registration (Accounts in this organizational directory only); no redirect URI is needed.","Entra admin center","Identity","Applications","App registrations"),
+                new ConfigurationRowsContent("Create the registration", ["Entra ID","App registrations","New registration"], [
+                    new(entry.Id+".name","Name",entry.Label,GuideValueKind.Derived,"") { IsTechnical=false,CanCopy=false },
+                    new(entry.Id+".accountTypes","Supported account types","Accounts in this organizational directory only",GuideValueKind.Derived,"") { IsTechnical=false,CanCopy=false }
+                ], "Select Register. No redirect URI is needed."),
                 Text("Use scopes: this API is called for a signed-in user. A scope describes an allowed operation; application permissions are not needed for this delegated chain."),
                 Portal("Set Application ID URI to api://<api-client-id>; enable a scope such as Orders.Read with Admins only consent and its display name/description.","App registration","Expose an API"),
                 Portal("Set api.requestedAccessTokenVersion to 2; preserve all other manifest fields.","App registration","Manifest"),

@@ -12,15 +12,19 @@ public enum CompletionState { Pending, InProgress, Complete, Blocked }
 public enum GuideValueKind { DeveloperSupplied, Sample, Derived }
 
 public sealed record GuideVersions(string Schema, string Rules, string Templates);
-public sealed record GuideValue(string Key, string Label, string Value, GuideValueKind Kind, string Guidance);
+public sealed record GuideValue(string Key, string Label, string Value, GuideValueKind Kind, string Guidance)
+{
+    public bool IsTechnical { get; init; } = true;
+    public bool CanCopy { get; init; } = true;
+}
 public sealed record ImplementationFacts(ImmutableArray<GuideValue> Values);
-public sealed record CodeArtifact(string Id, string ComponentId, string Language, string DestinationFile, string Content);
+public sealed record CodeArtifact(string Id, string ComponentId, string Language, string DestinationFile, string Content) { public string? ExecutionLocation { get; init; } }
 public sealed record StepCompletion(string StepId, CompletionState State, string? BlockerExplanation = null);
 
 /// <summary>Typed content is shared by the UI and Markdown export.</summary>
 public abstract record GuideContent;
-public sealed record InstructionContent(string Text) : GuideContent;
-public sealed record PortalActionContent(ImmutableArray<string> Breadcrumbs, string Action) : GuideContent;
+public sealed record InstructionContent(string Text) : GuideContent { public string Title { get; init; } = ""; }
+public sealed record PortalActionContent(ImmutableArray<string> Breadcrumbs, string Action) : GuideContent { public string Title { get; init; } = "Configure in Entra"; }
 public sealed record CopyableValueContent(GuideValue Value) : GuideContent;
 public sealed record ConfigurationRowsContent(string Title, ImmutableArray<string> Breadcrumbs, ImmutableArray<GuideValue> Values, string Instruction) : GuideContent;
 public sealed record CodeContent(CodeArtifact Artifact) : GuideContent;

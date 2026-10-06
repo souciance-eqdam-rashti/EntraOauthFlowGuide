@@ -1,10 +1,10 @@
 @inject IJSRuntime JS
 <div class="configuration-row">
- <div class="configuration-label"><MudText Typo="Typo.subtitle2">@Value.Label</MudText><MudText Typo="Typo.caption" Color="Color.Default">@KindLabel</MudText></div>
- <div class="configuration-value"><code>@Value.Value</code>@if(CanCopy) { <MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" Size="Size.Small" OnClick="Copy" aria-label="@($"Copy {Value.Label} {KindLabel.ToLowerInvariant()}")" /> }</div>
+ <div class="configuration-label"><MudText Typo="Typo.subtitle2">@Value.Label</MudText>@if(Value.Kind != GuideValueKind.Derived) { <MudText Typo="Typo.caption" Color="Color.Default">@KindLabel</MudText> }</div>
+ <div class="configuration-value"><span class="@(Value.IsTechnical ? "technical-setting" : "ordinary-setting")">@Value.Value</span>@if(CanCopy && Value.CanCopy) { <MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" Size="Size.Small" OnClick="Copy" aria-label="@($"Copy {Value.Label} {KindLabel.ToLowerInvariant()}")" /> }</div>
 </div>
-<p class="configuration-guidance">@Value.Guidance</p>
-<p role="status" aria-live="polite" class="copy-feedback">@feedback</p>
+@if(!string.IsNullOrWhiteSpace(Value.Guidance)) { <p class="configuration-guidance">@Value.Guidance</p> }
+@if(!string.IsNullOrEmpty(feedback)) { <p role="status" aria-live="polite" class="copy-feedback">@feedback</p> }
 @code {
  [Parameter] public bool CanCopy {get;set;}=true;
  [Parameter, EditorRequired] public GuideValue Value {get;set;}=null!;

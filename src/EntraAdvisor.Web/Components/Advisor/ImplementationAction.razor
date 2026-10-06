@@ -1,11 +1,10 @@
 <section class="implementation-action">
-<MudText Typo="Typo.subtitle2" Class="action-title">@Title</MudText>
-@if(!string.IsNullOrEmpty(PathLabel)) { <MudText Typo="Typo.caption">@PathLabel</MudText> }
-@if(Path.Count > 0) { <p class="action-path">@string.Join(" › ",Path)</p> }
-@ChildContent
+@if(Path.Count > 0) { <InstructionLocation Path="Path" Label="@(string.IsNullOrEmpty(PathLabel) ? "Open in Entra" : PathLabel)"/> }
+<div class="instruction-configure"><div class="instruction-section-heading"><MudIcon Icon="@Icons.Material.Outlined.Tune" Size="Size.Small" aria-hidden="true"/><MudText Typo="Typo.subtitle2" Class="action-title">@Title</MudText></div>
+<div class="instruction-action-body">@ChildContent</div></div>
 </section>
 @code {
- [Parameter, EditorRequired] public string Title {get;set;}="";
+ [Parameter, EditorRequired] public string Title {get;set;}="Configure";
  [Parameter] public string PathLabel {get;set;}="";
  [Parameter] public IReadOnlyList<string> Path {get;set;}=Array.Empty<string>();
  [Parameter] public RenderFragment? ChildContent {get;set;}

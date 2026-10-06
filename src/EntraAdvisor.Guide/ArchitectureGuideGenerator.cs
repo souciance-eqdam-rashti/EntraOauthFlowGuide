@@ -48,7 +48,7 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
                 Action = action, ExpectedResult = expected, Content = content.ToImmutableArray(), Sources = references.DistinctBy(s => s.Url).ToImmutableArray(),
                 DependsOnStepIds = steps.Count == 0 ? [] : [steps[^1].Id], RelatedRelationshipIds = hops?.ToImmutableArray() ?? [] });
         }
-        GuideContent Text(string text) => new InstructionContent(text);
+        GuideContent Text(string text, string title = "") => new InstructionContent(text) { Title = title };
         GuideContent Portal(string action, params string[] path) => new PortalActionContent(path.ToImmutableArray(), action);
         GuideContent Value(string key, string label, string? guidance = null) => new CopyableValueContent(new(key, label, "__" + key.Replace('.', '_').Replace('-', '_').ToUpperInvariant() + "__",
             GuideValueKind.DeveloperSupplied, guidance ?? (label.Contains("client ID") ? "From Overview, use this registration’s Application (client) ID and Directory (tenant) ID in the app configuration." : "Use the target resource’s identifier from Entra; request a separate token for each resource.")));
@@ -66,7 +66,10 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             {
                 var audience = plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.SingleTenant
                     ? "Accounts in this organizational directory only" : "Accounts in any organizational directory";
-                content.Add(Portal($"Register {component.Name}; choose {audience}.", "Entra admin center", "Entra ID", "App registrations", "New registration"));
+                content.Add(new ConfigurationRowsContent("Create the registration", ["Entra ID", "App registrations", "New registration"], [
+                    new(component.Id + ".name", "Name", component.Name, GuideValueKind.Derived, "") { IsTechnical = false, CanCopy = false },
+                    new(component.Id + ".accountTypes", "Supported account types", audience, GuideValueKind.Derived, "") { IsTechnical = false, CanCopy = false }
+                ], "Select Register."));
                 if (decision.SignIn != SignInApproach.None)
                 {
                     var platform = component.Stack.Value switch {
@@ -83,7 +86,7 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             }
             else content.Add(Text("Use the host-provided managed identity: enable it on the Azure host and record its principal ID. No app registration or credential upload is needed."));
             Add("register-" + component.Id, GuideSection.ClientRegistration, "Register application for " + component.Name, component.Id,
-                "Create the application identity and configure the platform or host identity.", "The component has its own identity and the required sign-in or credential configuration.", content, [register, Source("Platform registration guidance", PlatformUrl(component.Stack.Value))]);
+                "Create the application identity and configure the platform or host identity.", registration.CreateRegistration ? $"{component.Name} appears on its Overview page with the required platform or credential settings." : "The host-provided managed identity is enabled and its principal ID is recorded.", content, [register, Source("Platform registration guidance", PlatformUrl(component.Stack.Value))]);
         }
         foreach (var validation in plan.ApiValidation)
         {
@@ -95,11 +98,11 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
                 : userAccess
                     ? "Use scopes: callers access this API on behalf of the signed-in user. Define scopes to control which operations they can perform. Application permissions are not needed for this scenario."
                     : "Use app roles: they describe what an application may do without a signed-in user. This API receives application calls, so delegated scopes are not needed for this scenario.";
-            var content = new List<GuideContent> { Text(choice) };
+            var content = new List<GuideContent> { Text(choice, userAccess && appAccess ? "Use delegated and application permissions" : userAccess ? "Use delegated permissions" : "Use application permissions") };
             if (userAccess) content.Add(new ConfigurationRowsContent("Configure the API identifier and scope", ["App registrations", name, "Expose an API"], [
                 new(validation.ComponentId + ".applicationIdUri", "Application ID URI", "api://<backend-client-id>", GuideValueKind.DeveloperSupplied, "Replace <backend-client-id> with this API registration’s client ID."),
                 new(validation.ComponentId + ".scope", "Scope name", "Orders.Read", GuideValueKind.Sample, "Example only; no scope has been selected by this guide. Choose the operation your API will enforce, e.g. Orders.Read or Orders.Write."),
-                new(validation.ComponentId + ".scopeState", "Scope state", "Enabled", GuideValueKind.Derived, "")
+                new(validation.ComponentId + ".scopeState", "Scope state", "Enabled", GuideValueKind.Derived, "") { IsTechnical = false, CanCopy = false }
             ], "Add the scope and provide the consent name and description requested by Entra."));
             if (appAccess) content.Add(Portal("Add a least-privilege role such as Orders.Read.All with Applications as an allowed member type.", "API app registration", "App roles"));
             Add("expose-" + validation.ComponentId, GuideSection.ResourceRegistration, "Define access for " + name, validation.ComponentId,

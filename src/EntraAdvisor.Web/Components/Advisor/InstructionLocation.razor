@@ -1,0 +1,9 @@
+<div class="instruction-location">
+ <MudIcon Icon="@Icons.Material.Outlined.Place" Size="Size.Small" aria-hidden="true" />
+ <div><MudText Typo="Typo.subtitle2" Class="location-label">@Label</MudText>
+ <p class="location-path">@for(var i=0;i<Path.Count;i++) { if(i>0) { <span class="path-chevron" aria-hidden="true">›</span> } <span class="@(i == Path.Count-1 ? "destination" : "")">@Path[i]</span> }</p></div>
+</div>
+@code {
+ [Parameter] public string Label {get;set;}="Open in Entra";
+ [Parameter,EditorRequired] public IReadOnlyList<string> Path {get;set;}=Array.Empty<string>();
+}

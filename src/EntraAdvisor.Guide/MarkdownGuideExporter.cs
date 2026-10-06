@@ -14,14 +14,14 @@ public sealed class MarkdownGuideExporter : IGuideExporter
         foreach(var s in guide.Steps) {
             b.AppendLine($"\n## {s.Title}\n\nStep ID: {s.Id} · component: {s.ComponentId}\n\n{s.Action}\n");
             foreach(var c in s.Content) switch(c) {
-                case InstructionContent i: b.AppendLine(i.Text+"\n"); break;
+                case InstructionContent i: if(!string.IsNullOrEmpty(i.Title)) b.AppendLine("### "+i.Title+"\n"); b.AppendLine(i.Text+"\n"); break;
                 case PortalActionContent p: b.AppendLine(string.Join(" → ",p.Breadcrumbs)+"\n\n"+p.Action+"\n"); break;
                 case CopyableValueContent v: b.AppendLine($"**{v.Value.Label}**: `{v.Value.Value}`\n\n{v.Value.Guidance}\n"); break;
                 case ConfigurationRowsContent rows:
                     b.AppendLine($"**{rows.Title}**\n\nOpen in Entra: {string.Join(" → ", rows.Breadcrumbs)}\n");
-                    foreach(var value in rows.Values) b.AppendLine($"**{value.Label}** ({value.Kind}): `{value.Value}`\n\n{value.Guidance}\n");
+                    foreach(var value in rows.Values) b.AppendLine($"**{value.Label}** ({value.Kind}): {(value.IsTechnical ? "`"+value.Value+"`" : value.Value)}\n\n{value.Guidance}\n");
                     b.AppendLine(rows.Instruction+"\n"); break;
-                case CodeContent code: var fence=new string('`',Math.Max(3,LongestRun(code.Artifact.Content)+1)); b.AppendLine($"### {code.Artifact.DestinationFile}\n\n{fence}{code.Artifact.Language}\n{code.Artifact.Content}\n{fence}\n"); break;
+                case CodeContent code: if(code.Artifact.ExecutionLocation is not null) b.AppendLine("Execution location: "+code.Artifact.ExecutionLocation+"\n"); var fence=new string('`',Math.Max(3,LongestRun(code.Artifact.Content)+1)); b.AppendLine($"### {code.Artifact.DestinationFile}\n\n{fence}{code.Artifact.Language}\n{code.Artifact.Content}\n{fence}\n"); break;
                 case ExplanationContent e: b.AppendLine($"**{e.Title}**\n\n{e.Text}\n"); break;
             }
             b.AppendLine("Expected result: "+s.ExpectedResult+"\n");

@@ -1,0 +1,5 @@
+<div class="instruction-outcome"><MudIcon Icon="@Icons.Material.Outlined.CheckCircleOutline" Size="Size.Small" aria-hidden="true"/><div><MudText Typo="Typo.subtitle2">@Label</MudText><p>@Text</p></div></div>
+@code {
+ [Parameter] public string Label {get;set;}="Expected result";
+ [Parameter,EditorRequired] public string Text {get;set;}="";
+}

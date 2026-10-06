@@ -1,50 +1,39 @@
 <div class="implementation-actions">
-@foreach(var content in Step.Content) {
- @switch(content) {
-  case CopyableValueContent value:
-   <ConfigurationValueRow @key="value.Value.Key" Value="value.Value" />
+@foreach(var group in Groups()) {
+ @switch(group[0]) {
+  case CopyableValueContent:
+   <ImplementationAction Title="Configure settings"><div class="configuration-rows">@foreach(var value in group.Cast<CopyableValueContent>()) { <ConfigurationValueRow Value="value.Value" /> }</div></ImplementationAction>
    break;
   case PortalActionContent portal:
-   <ImplementationAction Title="@PortalTitle(portal)" Path="portal.Breadcrumbs"><p>@portal.Action</p></ImplementationAction>
+   <ImplementationAction Title="@portal.Title" Path="@PortalPath(portal.Breadcrumbs)"><p>@portal.Action</p></ImplementationAction>
    break;
-  case InstructionContent instruction:
-   <ImplementationAction Title="@InstructionTitle(instruction.Text)"><p>@instruction.Text</p></ImplementationAction>
+  case InstructionContent:
+   <ImplementationAction Title="@GroupTitle(group)">@foreach(var instruction in group.Cast<InstructionContent>()) { <p>@instruction.Text</p> }</ImplementationAction>
    break;
   case ConfigurationRowsContent rows:
-   <ImplementationAction Title="@rows.Title" Path="rows.Breadcrumbs" PathLabel="Open in Entra"><div class="configuration-rows">@foreach(var value in rows.Values) { <ConfigurationValueRow Value="value" CanCopy="@(value.Kind != GuideValueKind.Derived)" /> }</div><p>@rows.Instruction</p></ImplementationAction>
+   <ImplementationAction Title="@rows.Title" Path="@PortalPath(rows.Breadcrumbs)"><div class="configuration-rows">@foreach(var value in rows.Values) { <ConfigurationValueRow Value="value" CanCopy="@(value.CanCopy && value.Kind != GuideValueKind.Derived)" /> }</div><p>@rows.Instruction</p></ImplementationAction>
    break;
   case CodeContent snippet:
-   <ImplementationAction Title="@($"Update {snippet.Artifact.DestinationFile}")"><MudExpansionPanels Elevation="0" Class="quiet-disclosures"><MudExpansionPanel Expanded="true" Text="@($"View {snippet.Artifact.Language} code")"><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre></MudExpansionPanel></MudExpansionPanels></ImplementationAction>
+   <ImplementationAction Title="@(snippet.Artifact.ExecutionLocation is not null ? "Run the commands" : "Apply the code")" Path="@(new[] { snippet.Artifact.ExecutionLocation ?? snippet.Artifact.DestinationFile })" PathLabel="@(snippet.Artifact.ExecutionLocation is null ? "File location" : "Execution location")"><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre></ImplementationAction>
    break;
   case ExplanationContent explanation:
    <MudExpansionPanels Elevation="0" Class="quiet-disclosures"><MudExpansionPanel Text="Why this setting?"><MudText Typo="Typo.subtitle2">@explanation.Title</MudText><p>@explanation.Text</p></MudExpansionPanel></MudExpansionPanels>
    break;
  }
 }
+@if(!string.IsNullOrWhiteSpace(Step.ExpectedResult)) { <ExpectedResult Text="@Step.ExpectedResult" Label="@(Step.Section == GuideSection.TestAndTroubleshoot ? "Expected output" : "Expected result")"/> }
 </div>
 @code {
  [Parameter,EditorRequired] public GuideStep Step {get;set;}=null!;
  [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
- private static string PortalTitle(PortalActionContent p) => p.Breadcrumbs.LastOrDefault() switch {
-  "New registration" => "Register the application", "Authentication" => "Configure the platform", "Expose an API" => "Expose API access", "Certificates" => "Upload the public certificate", "Federated credentials" => "Configure workload trust", "Add a permission" => "Select permissions", "API permissions" => "Grant consent", _ => "Configure in Entra"
- };
- private string InstructionTitle(string text) => text switch {
-  var t when t.StartsWith("You need") => "Required administrator role",
-  var t when t.StartsWith("Use scopes") => "Use delegated permissions",
-  var t when t.StartsWith("Use app roles") => "Use application permissions",
-  var t when t.StartsWith("Use both") => "Use delegated and application permissions",
-  var t when t.StartsWith("Validate") => "Validate and authorize tokens",
-  var t when t.StartsWith("Send") => "Call the target API",
-  var t when t.Contains("on-behalf-of") => "Acquire the downstream token",
-  var t when t.StartsWith("Test") => "Check allowed and denied access",
-  var t when t.StartsWith("For multi-tenant") => "Test organization and guest access",
-  var t when t.StartsWith("For guest") => "Configure guest access",
-  var t when t.StartsWith("Assign") => "Assign resource access",
-  var t when t.StartsWith("In the resource tenant") => "Configure the resource tenant",
-  var t when t.StartsWith("Use an organizational") => "Configure organization access",
-  var t when t.StartsWith("Set the registered") => "Configure sign-in",
-  var t when t.StartsWith("Use the host-provided") => "Enable managed identity",
-  var t when t.StartsWith("Acquire") || t.StartsWith("Use the platform") || t.StartsWith("Display") => "Acquire the access token",
-  _ => Step.Section == GuideSection.Prerequisites ? "Prepare the tenant" : "Configure the application"
- };
+ private IEnumerable<List<GuideContent>> Groups() {
+  var groups=new List<List<GuideContent>>();
+  foreach(var content in Step.Content) {
+   if(groups.Count>0 && (content is InstructionContent i && string.IsNullOrEmpty(i.Title) && groups[^1][0] is InstructionContent || content is CopyableValueContent && groups[^1][0] is CopyableValueContent)) groups[^1].Add(content);
+   else groups.Add(new() { content });
+  }
+  return groups;
+ }
+ private string GroupTitle(List<GuideContent> group) => group.OfType<InstructionContent>().Select(i=>i.Title).FirstOrDefault(t=>!string.IsNullOrEmpty(t)) ?? (Step.Section switch { GuideSection.Prerequisites => "Prerequisites", GuideSection.TestAndTroubleshoot => "Validate the flow", _ => "Configure the application" });
+ private static IReadOnlyList<string> PortalPath(IReadOnlyList<string> path) => path.Count>0 && path[0] == "Entra admin center" ? path.Skip(1).ToArray() : path;
 }
