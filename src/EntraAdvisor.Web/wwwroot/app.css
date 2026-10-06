@@ -167,3 +167,5 @@ main.implement-page{background:var(--mud-palette-background)!important}
 .permission-explainer { font-size:14px; margin-bottom:16px; } .permission-explainer summary { display:flex; gap:8px; align-items:center; cursor:pointer; width:fit-content; } .permission-explainer summary:focus-visible { outline:2px solid var(--mud-palette-primary); outline-offset:4px; } .permission-comparison { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; } .permission-comparison section { border:1px solid var(--mud-palette-divider); border-radius:10px; padding:16px; } .permission-comparison p { line-height:1.6; } .permission-route { background:var(--mud-palette-background); padding:8px 12px; border-radius:6px; margin-top:10px; font-weight:600; } @media(max-width:600px) { .permission-comparison { grid-template-columns:1fr; } }
 
 .group-action-rows.single-action { list-style:none; padding-left:0; }
+
+.app-loading { margin:24px; color:#172b4d; font-family:Segoe UI,Arial,sans-serif; }

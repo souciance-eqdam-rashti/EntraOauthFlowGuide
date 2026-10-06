@@ -1,13 +1,13 @@
 # Technical stack and verification sources
 
-Reviewed: 2026-10-05, checkpoint 1.2. These sources establish the foundation and library families. OAuth rules and generated authentication snippets require their own later review dates and compilation/tenant evidence.
+Reviewed: 2026-10-06, standalone WebAssembly conversion. These sources establish the foundation and library families. OAuth rules and generated authentication snippets require their own later review dates and compilation/tenant evidence.
 
 | Dependency | Selected version | Purpose / evidence |
 | --- | --- | --- |
 | .NET SDK | 10.0.400, latest patch roll-forward | Installed SDK; net10.0 targets; global.json pins baseline |
-| ASP.NET Core | .NET 10 shared framework | Server-interactive Blazor host |
-| Aspire AppHost SDK | 13.6.0 | Official templates; local web orchestration |
-| Fluent UI Blazor | 5.0.0 | Component library; registered services/providers and interactive status button |
+| Blazor WebAssembly | 10.0.11 | Standalone browser runtime; static production files |
+| Aspire AppHost SDK | 13.6.0 | Optional local orchestration; not part of static deployment |
+| MudBlazor | 9.11.0 | Existing component library, theme and UI providers |
 | Extensions resilience/service discovery | 10.10.0 | Official Aspire 13.6 ServiceDefaults template |
 | OpenTelemetry | 1.17.0 | Official template tracing, metrics and conditional OTLP export |
 | xUnit | 2.9.3 | Foundation contracts tests; runner 3.1.4 |
@@ -17,6 +17,8 @@ Reviewed: 2026-10-05, checkpoint 1.2. These sources establish the foundation and
 Commit package lock files for resolved dependency versions. Use locked restore in repeatable validation. No database, containers, credential storage or advisor sign-in is required.
 
 AppHost uses `AspireUseCliBundle=false`: this .NET-only solution obtains dashboard and orchestration binaries through the SDK's NuGet packages, so `dotnet run` does not require a separately installed Aspire CLI. Suppress the corresponding ASPIRE010 advisory explicitly; CLI-dependent features are outside this foundation. See the official SDK documentation below.
+
+The Web project has no ServiceDefaults reference or server render mode. See [static deployment](static-deployment.md) for publish/base-path instructions and the deliberate no-trimming release configuration.
 
 ## Official sources
 

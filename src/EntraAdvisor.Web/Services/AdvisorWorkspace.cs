@@ -8,7 +8,7 @@ namespace EntraAdvisor.Web.Services;
 
 public enum JourneyStage { Design, Implement }
 
-/// <summary>Circuit-scoped state; no credentials, tokens, database or browser persistence.</summary>
+/// <summary>Browser-session state; no credentials, tokens, database or browser persistence.</summary>
 public sealed class AdvisorWorkspace
 {
     public QuestionnaireSession Session { get; private set; } = QuestionnaireSession.Create(TopologyPresets.Create("api-chain"));
