@@ -4,7 +4,7 @@
 @using EntraAdvisor.Guide
 <PageTitle>Entra OAuth Advisor</PageTitle>
 <header><a href="/">◈ Entra OAuth Advisor</a><span>Architecture → implementation</span><button @onclick="Reset">Start over</button></header>
-<main>
+<main class="@(W.Stage == JourneyStage.Implement ? "implement-page" : "")">
 <nav aria-label="Journey">@foreach(var stage in Enum.GetValues<JourneyStage>()) { <button aria-current="@(W.Stage == stage ? "step" : null)" disabled="@(stage != JourneyStage.Design && W.Session.Evaluation.Plan is null)" @onclick="() => Navigate(stage)">@((int)stage+1). @stage</button> }</nav>
 <div class="workspace choosing-topology"><section class="work-panel">
 <p class="eyebrow">@W.Stage · Enterprise Entra identities</p><h1 tabindex="-1" @ref="heading">@Title</h1><p role="status" class="feedback">@message</p>
@@ -21,20 +21,14 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  var step = guide.Steps[W.ActiveStep];
  <div class="implementation-layout">
  <section class="implementation-step-pane" aria-label="Selected implementation step" id="implementation-step-pane">
- <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId"/><p>@step.Purpose</p><p><strong>Action:</strong> @step.Action</p> }
- @foreach(var content in step.Content) { @switch(content) {
- case InstructionContent instruction: <p>@instruction.Text</p> break;
- case PortalActionContent portal: <p class="breadcrumbs">@string.Join(" → ",portal.Breadcrumbs)</p><p>@portal.Action</p> break;
- case CopyableValueContent value: <strong>@value.Value.Label</strong><div class="copy-block"><code>@value.Value.Value</code><button @onclick="() => Copy(value.Value.Value)">Copy</button></div><p>@value.Value.Guidance</p> break;
- case CodeContent snippet: <div class="code-heading"><strong>@snippet.Artifact.DestinationFile <span class="language-label">@snippet.Artifact.Language</span></strong><button @onclick="() => Copy(snippet.Artifact.Content)">Copy code</button></div><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre> break;
- case ExplanationContent explanation: <details><summary>@explanation.Title</summary><p>@explanation.Text</p></details> break;
- } }
+ <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId"/><p class="step-action">@step.Action</p> }
+ <CompactStepContent Step="step" Plan="guide.Architecture"/>
  @if(step.Section != GuideSection.Prerequisites) { <p class="expected"><strong>Expected result:</strong> @step.ExpectedResult</p> }@foreach(var source in step.Sources) { <p><a href="@source.Url" target="_blank" rel="noopener">@source.Title</a></p> }
  </article></section>
  <section class="implementation-step-selector" aria-label="Implementation steps"><h2>Implementation steps</h2><ol class="step-list">@for(var i=0;i<guide.Steps.Length;i++) { var index=i; <li><button aria-current="@(i == W.ActiveStep ? "step" : null)" @onclick="() => SelectStep(index)">@guide.Steps[i].Title</button></li> }</ol></section>
  </div>
  <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"><button @onclick="Export">Export Markdown ↓</button><button @onclick="OpenDiagram">Diagram Overview</button></ValidationExport>
- @if(exportMarkdown is not null) { <section class="export-panel" aria-label="Markdown export"><h2>Markdown export</h2><button @onclick="() => Copy(exportMarkdown)">Copy Markdown</button><button @onclick="() => exportMarkdown = null">Close export</button><textarea aria-label="Complete Markdown guide" readonly value="@exportMarkdown"></textarea></section> }
+ @if(exportMarkdown is not null) { <section class="export-panel" aria-label="Markdown export"><h2>Markdown export</h2><button @onclick="() => exportMarkdown = null">Close export</button><textarea aria-label="Complete Markdown guide" readonly value="@exportMarkdown"></textarea></section> }
  <dialog id="diagram-overview" class="diagram-dialog" aria-labelledby="diagram-title"><div class="diagram-dialog-header"><h2 id="diagram-title">Diagram Overview</h2><button autofocus @onclick="CloseDiagram" aria-label="Close diagram overview">Close ✕</button></div><AuthenticationFlow Plan="guide.Architecture" ShowTechnical="true"/></dialog>
 
 }

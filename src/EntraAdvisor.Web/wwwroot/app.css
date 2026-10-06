@@ -37,3 +37,16 @@ nav{flex-wrap:wrap}
 .diagram-dialog{width:min(1100px,calc(100vw - 32px));max-height:85dvh;border:1px solid #cbd9e0;border-radius:16px;padding:24px;background:#f5f8fa;color:#20343f;overflow-y:auto}
 .diagram-dialog::backdrop{background:rgba(20,40,50,.55)}.diagram-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:-24px;background:#f5f8fa;padding:12px 0;z-index:1}.diagram-dialog-header h2{margin:0}
 @media(max-width:700px){.implementation-layout{grid-template-columns:minmax(0,1fr);gap:16px}.implementation-step-selector{grid-row:1;height:auto;max-height:220px;padding:16px}.implementation-step-pane{height:60dvh;padding:16px}.diagram-dialog{padding:16px}.diagram-dialog-header{top:-16px}}
+
+/* The implementation shell fits the viewport; only the reading and selector panes scroll. */
+body:has(main.implement-page){height:100dvh!important;min-height:0!important;overflow:hidden!important;display:flex;flex-direction:column}
+body:has(main.implement-page)>header{flex:0 0 auto;padding:12px 3%}
+main.implement-page{flex:1 1 0;min-height:0;padding:12px 3%;display:flex;flex-direction:column;overflow:hidden}
+.implement-page>nav{flex:0 0 auto;margin-bottom:10px}.implement-page .workspace{flex:1 1 0;min-height:0;display:flex}.implement-page .work-panel{flex:1;min-height:0;display:flex;flex-direction:column}
+.implement-page .work-panel>h1{font-size:28px;margin:6px 0 12px}.implement-page .work-panel>.eyebrow{margin:0}.implement-page .feedback:empty{display:none}.implement-page .feedback{margin:0 0 6px}
+.implement-page .implementation-layout{flex:1 1 0;min-height:0;gap:16px}.implement-page .implementation-step-pane,.implement-page .implementation-step-selector{height:100%;min-height:0;padding:16px}
+.implement-page .implementation-step-pane p{margin:8px 0;line-height:1.4}.implement-page .implementation-step-pane h2{font-size:22px;margin:6px 0 10px}.implement-page .expected{padding:10px}
+.authentication-methods{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin:10px 0;font-size:13px}.method-label{font-weight:600}.method-link{display:inline}.authentication-methods strong{font-weight:500}
+.value-guidance{margin:12px 0;padding:10px 12px;background:#edf5f8;border-radius:6px}.step-detail,.step-code{padding:8px 0}.step-detail summary,.step-code summary{font-size:13px;color:#526874}
+.implementation-exports{flex:0 0 auto}.implementation-exports .actions{margin:10px 0 0;gap:8px}.implementation-exports button{font-size:14px;padding:8px 12px}.implement-page .export-panel{max-height:24dvh;overflow:auto}
+@media(max-width:700px){.implement-page .implementation-layout{grid-template-rows:minmax(0,.4fr) minmax(0,1fr)}.implement-page .implementation-step-selector{height:100%;max-height:none}.implement-page .implementation-step-pane{height:100%}.implementation-exports .actions button{flex:1 1 auto;padding:7px 9px;font-size:12px}.implement-page .work-panel>h1{font-size:23px}.implement-page nav button{padding:7px 10px}}

@@ -22,9 +22,6 @@
     }
     @if (Plan.Relationships.Length == 0) { <li><div class="flow-line">Application <span class="flow-arrow">→</span> Microsoft Entra <span class="flow-arrow">→</span> Application</div><p>@(Plan.Components.Any(c => c.SignIn != SignInApproach.None) ? "The user signs in through Entra. The application validates the sign-in response and creates a session." : "The API validates incoming access tokens and checks permissions before allowing access.")</p></li> }
     </ol>
-    @if(ShowTechnical && Plan.Prerequisites.Length > 0) {
-        <details><summary>Tenant and resource requirements</summary>@foreach(var prerequisite in Plan.Prerequisites) { <p>@prerequisite.Explanation @prerequisite.NextAction</p> }</details>
-    }
 </section>
 @code {
     [Parameter, EditorRequired] public OAuthPlan Plan { get; set; } = null!;

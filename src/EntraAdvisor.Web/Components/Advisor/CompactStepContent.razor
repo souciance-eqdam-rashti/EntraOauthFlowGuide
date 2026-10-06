@@ -1,0 +1,54 @@
+@using EntraAdvisor.Guide.Contracts
+@foreach(var content in Step.Content) {
+    @switch(content) {
+        case CopyableValueContent value:
+            <div class="value-guidance"><strong>@value.Value.Label</strong><p>@ValueGuidance(value.Value)</p></div>
+            break;
+        case PortalActionContent portal:
+            <p class="breadcrumbs">@string.Join(" → ",portal.Breadcrumbs)</p><p>@PortalSummary(portal.Action)</p>
+            @if(PortalSummary(portal.Action) != portal.Action) { <details class="step-detail"><summary>Setup details</summary><p>@portal.Action</p></details> }
+            break;
+        case InstructionContent instruction:
+            <p>@Brief(instruction.Text)</p>
+            @if(Brief(instruction.Text) != instruction.Text) { <details class="step-detail"><summary>More detail</summary><p>@instruction.Text</p></details> }
+            break;
+        case CodeContent snippet:
+            <details class="step-code"><summary>@snippet.Artifact.DestinationFile · @snippet.Artifact.Language</summary><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre></details>
+            break;
+        case ExplanationContent explanation:
+            <details class="step-detail"><summary>@explanation.Title</summary><p>@explanation.Text</p></details>
+            break;
+    }
+}
+@code {
+    [Parameter,EditorRequired] public GuideStep Step {get;set;}=null!;
+    [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
+    private static string Brief(string text) {
+        // Collapse prose at a sentence boundary; never discard the complete setup instructions.
+        var boundary=System.Text.RegularExpressions.Regex.Match(text,@"[.!?] (?=[A-Z])");
+        return boundary.Success ? text[..(boundary.Index+1)] : text;
+    }
+    private string PortalSummary(string action) {
+        if(action.StartsWith("Set Application ID URI"))
+            return "Set the API's Application ID URI, for example api://<api-client-id>. For user access, expose a scope such as Orders.Read or Orders.Write; add it as a Delegated permission on the caller.";
+        return System.Text.RegularExpressions.Regex.Replace(Brief(action), @"__[A-Z0-9_]+__", match => match.Value.Contains("SCOPE") ? "<scope name from Entra>" : "<value from Entra>");
+    }
+    private string ValueGuidance(GuideValue value) {
+        var key=(value.Key+" "+value.Label).ToLowerInvariant();
+        if(key.Contains("clientid") || key.Contains("client id"))
+            return Plan.ApiValidation.Any(v=>v.ComponentId==Step.ComponentId)
+                ? "Get this API's client ID from Entra → App registrations → Overview. For v2 tokens, this GUID is the audience, e.g. 11111111-2222-3333-4444-555555555555. A v1 audience can be its Application ID URI, e.g. api://11111111-2222-3333-4444-555555555555. Match the API's token version."
+                : "Get Application (client) ID from this app's Entra registration → Overview. Example format: 11111111-2222-3333-4444-555555555555; use your actual ID.";
+        if(key.Contains("audience"))
+            return "Configure the API's accepted audience from its registration. For v2 access tokens, aud is the API client ID (for example 11111111-2222-3333-4444-555555555555); for v1 it can be its Application ID URI (for example api://11111111-2222-3333-4444-555555555555). Match the target API and token version.";
+        var hop=Plan.Relationships.FirstOrDefault(h=>h.Authorization.DeveloperValueKey==value.Key);
+        if(key.Contains("scope") || key.Contains("permission") || key.Contains("role")) {
+            if(hop?.Authorization.Mode is PermissionMode.AzureRoleAssignment or PermissionMode.AzureResourceAuthorization)
+                return "Assign the resource's documented data-access role to the calling identity at the resource scope. Example: Storage Blob Data Reader for reading blobs; other resources use different roles. Request that resource's documented audience/.default.";
+            if(hop?.Identity == ActingIdentity.Application)
+                return "Without a signed-in user: define an API app role such as Orders.Read.All with Applications allowed; add it as an Application permission on the caller and grant admin consent. Request api://<api-client-id>/.default; the API checks roles. For Graph, an example is User.Read.All (Application), with admin consent.";
+            return "With a signed-in user: define a scope on the target API → Expose an API, such as Orders.Read or Orders.Write. Add it as a Delegated permission on the caller and obtain required consent. Request api://<api-client-id>/Orders.Read; the API checks scp. For Graph, User.Read is an example delegated permission. Application permissions/app roles apply to calls without a user.";
+        }
+        return value.Guidance;
+    }
+}

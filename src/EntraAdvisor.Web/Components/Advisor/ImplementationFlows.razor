@@ -1,10 +1,10 @@
-<section class="question-help" aria-label="Authentication methods">
-    <strong>Authentication methods used</strong>
+<section class="authentication-methods" aria-label="Authentication methods">
+    <span class="method-label">Authentication methods used:</span>
     @foreach(var flow in Flows) {
         var source=EntraAdvisor.Guide.ArchitectureGuideGenerator.FlowSource(flow);
-        <p><strong>@source.Title</strong> · <a href="@source.Url" target="_blank" rel="noopener">Microsoft Learn ↗</a></p>
+        <span class="method-link"><strong>@source.Title</strong> · <a href="@source.Url" target="_blank" rel="noopener">Microsoft Learn ↗</a></span>
     }
-    @if(Plan.ApiValidation.Any(v => v.ComponentId == ComponentId)) { <p><strong>API token validation and authorization</strong> · <a href="https://learn.microsoft.com/en-us/entra/identity-platform/scenario-protected-web-api-app-configuration" target="_blank" rel="noopener">Microsoft Learn ↗</a></p> }
+    @if(Plan.ApiValidation.Any(v => v.ComponentId == ComponentId)) { <span class="method-link"><strong>API token validation and authorization</strong> · <a href="https://learn.microsoft.com/en-us/entra/identity-platform/scenario-protected-web-api-app-configuration" target="_blank" rel="noopener">Microsoft Learn ↗</a></span> }
 </section>
 @code {
     [Parameter, EditorRequired] public OAuthPlan Plan {get;set;}=null!;
