@@ -265,3 +265,11 @@ Validation: all 101 tests passed after the final changes. Browser checks verifie
 References checked 2026-10-06: https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation and https://learn.microsoft.com/en-us/entra/identity-platform/scopes-oidc. Examples are illustrative and never replace the developer's actual registrations or resource-specific permission requirements. Full setup instructions and generated code remain available on expansion and in Markdown exports.
 
 Next action: collect feedback on compact instructions and viewport fit; remaining milestone 4 platform-template coverage is unchanged.
+
+## Concise, scenario-specific implementation copy — complete, 2026-10-06
+
+Completed in the main folder: removed sentence truncation and duplicate full-text expansions from the step renderer, along with repeated action and expected-result summaries. Rewrote shared registration, access-definition, permission/consent, runtime configuration, credential, tenant-boundary and verification instructions. Registration describes creation once and obtains IDs once; audience/token validation belongs in runtime configuration rather than being repeated in registration and access-definition. Access-definition explains scopes for delegated user calls, app roles for application calls, or both for mixed access, then gives only applicable setup actions. Shortened delegated-chain content and made its registration labels follow component names. Presets now use Browser App, Backend API and Downstream API in place of numbered APIs. Markdown no longer repeats identical purpose and action text.
+
+Validation: all 104 tests passed, including three new semantic checks for user-only, application-only and mixed API access guidance. Browser walkthrough of the cited browser-to-backend scenario confirmed a single registration action, one client/tenant-ID instruction, descriptive component/step names, and a concise scope explanation followed by Expose an API configuration without duplicate Setup details, audience paragraphs or expected-result text. Screenshot: coding worktree .artifacts/implementation-access-guidance.png. Updated main-folder app remains on http://localhost:5077/. No tenant actions or live Entra tests were performed.
+
+Next action: collect copy feedback and continue remaining milestone 4 template coverage.

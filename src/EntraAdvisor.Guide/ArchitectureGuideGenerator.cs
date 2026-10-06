@@ -50,8 +50,8 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
         }
         GuideContent Text(string text) => new InstructionContent(text);
         GuideContent Portal(string action, params string[] path) => new PortalActionContent(path.ToImmutableArray(), action);
-        GuideContent Value(string key, string label) => new CopyableValueContent(new(key, label, "__" + key.Replace('.', '_').Replace('-', '_').ToUpperInvariant() + "__",
-            GuideValueKind.DeveloperSupplied, "Record the actual value during setup. Replace this placeholder in your application configuration."));
+        GuideContent Value(string key, string label, string? guidance = null) => new CopyableValueContent(new(key, label, "__" + key.Replace('.', '_').Replace('-', '_').ToUpperInvariant() + "__",
+            GuideValueKind.DeveloperSupplied, guidance ?? (label.Contains("client ID") ? "From Overview, use this registration’s Application (client) ID and Directory (tenant) ID in the app configuration." : "Use the target resource’s identifier from Entra; request a separate token for each resource.")));
         var first = plan.Scenario.Components[0].Id;
         Add("prepare", GuideSection.Prerequisites, "Prepare your Entra tenant", first,
             "Confirm access to the test tenant and administrator support for consent and assignments.",
@@ -66,7 +66,7 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             {
                 var audience = plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.SingleTenant
                     ? "Accounts in this organizational directory only" : "Accounts in any organizational directory";
-                content.Add(Portal($"Create a new registration named for {component.Name}. Choose {audience}. Record its Application (client) ID and Directory (tenant) ID.", "Entra admin center", "Entra ID", "App registrations", "New registration"));
+                content.Add(Portal($"Register {component.Name}; choose {audience}.", "Entra admin center", "Entra ID", "App registrations", "New registration"));
                 content.Add(Value(component.Id + ".clientId", component.Name + " client ID"));
                 if (decision.SignIn != SignInApproach.None)
                 {
@@ -75,25 +75,30 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
                         ImplementationStack.BlazorWebAssembly or ImplementationStack.JavaScriptTypeScript => "Single-page application",
                         _ => "Mobile and desktop applications"
                     };
-                    content.Add(Portal($"Add the {platform} platform. For browser-based sign-in, register the exact callback URI used by the authentication library. For device code, enable the supported public-client flow instead of adding a web callback. Keep implicit grants disabled.", "App registration", "Authentication"));
+                    content.Add(Portal(decision.SignIn == SignInApproach.DeviceCode ? "Enable public-client flows for device-code sign-in; no web callback is needed." : $"Add the {platform} platform with the library’s exact callback URI. Keep implicit grants disabled.", "App registration", "Authentication"));
                 }
                 if (decision.Credential == CredentialMechanism.Certificate)
-                    content.Add(Portal("Create a signing certificate in a protected key store. Upload only its public certificate; configure the application to load the private key securely. Plan certificate rotation.", "App registration", "Certificates & secrets", "Certificates"));
+                    content.Add(Portal("Upload the public signing certificate. Keep its private key in a protected server store and plan rotation.", "App registration", "Certificates & secrets", "Certificates"));
                 if (decision.Credential == CredentialMechanism.WorkloadFederation)
-                    content.Add(Portal("Create a federated credential for your actual workload provider. Match its issuer, subject and audience exactly. Configure the workload to obtain the assertion from that provider.", "App registration", "Certificates & secrets", "Federated credentials"));
+                    content.Add(Portal("Add a federated credential matching the workload provider’s issuer, subject and audience; obtain assertions from that provider.", "App registration", "Certificates & secrets", "Federated credentials"));
             }
-            else content.Add(Text("Use the host-provided managed identity for this application. Enable the identity on the Azure host and record its principal ID. Do not create an unnecessary app registration or upload a credential for managed identity."));
-            Add("register-" + component.Id, GuideSection.ClientRegistration, "Set up " + component.Name + " in Entra", component.Id,
+            else content.Add(Text("Use the host-provided managed identity: enable it on the Azure host and record its principal ID. No app registration or credential upload is needed."));
+            Add("register-" + component.Id, GuideSection.ClientRegistration, "Register application for " + component.Name, component.Id,
                 "Create the application identity and configure the platform or host identity.", "The component has its own identity and the required sign-in or credential configuration.", content, [register, Source("Platform registration guidance", PlatformUrl(component.Stack.Value))]);
         }
         foreach (var validation in plan.ApiValidation)
         {
             var name = plan.Scenario.Components.Single(c => c.Id == validation.ComponentId).Name;
-            var content = new List<GuideContent> { Value(validation.AudienceValueKey, "API audience"), Text("Record the API's accepted audience and issuer. For a custom API using v2 access tokens, set api.requestedAccessTokenVersion to 2 in its registration manifest, preserving all existing fields.") };
-            if (validation.Authorization.Any(a => a.AcceptedIdentity == ActingIdentity.DelegatedUser))
-                content.Add(Portal("Set an Application ID URI and add the delegated scopes your API will enforce. Choose scope values and consent descriptions for the actual operations; enable each scope.", "API app registration", "Expose an API"));
-            if (validation.Authorization.Any(a => a.AcceptedIdentity == ActingIdentity.Application))
-                content.Add(Portal("Define least-privilege app roles with Applications as an allowed member type. Use these roles to authorize application callers; an access token alone is not sufficient authorization.", "API app registration", "App roles"));
+            var userAccess = validation.Authorization.Any(a => a.AcceptedIdentity == ActingIdentity.DelegatedUser);
+            var appAccess = validation.Authorization.Any(a => a.AcceptedIdentity == ActingIdentity.Application);
+            var choice = userAccess && appAccess
+                ? "Use both: scopes limit calls made for a signed-in user; app roles permit calls made by an application without a user. This API accepts both identities."
+                : userAccess
+                    ? "Use scopes: they describe what a caller may do for a signed-in user. This API receives user-delegated calls, so application permissions are not needed for this scenario."
+                    : "Use app roles: they describe what an application may do without a signed-in user. This API receives application calls, so delegated scopes are not needed for this scenario.";
+            var content = new List<GuideContent> { Text(choice) };
+            if (userAccess) content.Add(Portal("Set Application ID URI to api://<backend-client-id>; add and enable a scope such as Orders.Read or Orders.Write with its consent description.", "API app registration", "Expose an API"));
+            if (appAccess) content.Add(Portal("Add a least-privilege role such as Orders.Read.All with Applications as an allowed member type.", "API app registration", "App roles"));
             Add("expose-" + validation.ComponentId, GuideSection.ResourceRegistration, "Define access for " + name, validation.ComponentId,
                 "Define the scopes or roles this API accepts.", "The API registration exposes the authorization values its callers need.", content, [expose, roles]);
         }
@@ -102,15 +107,15 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             var relationship = plan.Scenario.Relationships.Single(r => r.Id == hop.RelationshipId);
             var resource = plan.Scenario.Resources.Single(r => r.Id == relationship.TargetResourceId);
             var caller = plan.Scenario.Components.Single(c => c.Id == relationship.CallerComponentId).Name;
-            var content = new List<GuideContent> { Value(hop.AudienceValueKey, "Target resource audience"), Value(hop.Authorization.DeveloperValueKey, "Required permissions or roles"), Text(hop.Authorization.SelectionGuidance) };
+            var content = new List<GuideContent>();
             if (resource.Category.Value == ResourceCategory.AzureResource)
-                content.Add(Text("Use the resource's documented Entra audience and supported authorization method. Where Azure RBAC is required, assign the least-privilege data-access role to the calling principal at the appropriate resource scope. A management-plane role may not grant data access. Verify resource-specific delegated/application support; do not substitute an invented universal Azure permission."));
+                content.Add(Text("Assign the resource’s documented data-access role to the caller at the resource scope, e.g. Storage Blob Data Reader for blob reads. Use that resource’s audience and supported identity mode; a management role alone may not grant data access."));
             else if (hop.Credential == CredentialMechanism.ManagedIdentity)
-                content.Add(Text("Grant the required application roles to the managed identity's service principal for the target API or Microsoft Graph, using an authorized administrator and the provider's supported assignment procedure. Managed identity has no caller app registration on which to add API permissions. Confirm the assignment in the resource tenant."));
+                content.Add(Text("Assign the target’s application role to the managed identity’s service principal in the resource tenant. Managed identity has no caller app registration; use an authorized administrator and the provider’s assignment procedure."));
             else
-                content.Add(Portal($"On {caller}'s registration, add a permission for {(resource.Category.Value == ResourceCategory.MicrosoftGraph ? "Microsoft Graph" : resource.Name)}. Select {(hop.Identity == ActingIdentity.DelegatedUser ? "Delegated permissions and the scopes defined on the target" : "Application permissions and the target's app roles")}. Obtain user or administrator consent as required by the permission and tenant policy. For managed identity, grant application roles to its service principal instead of configuring API permissions on an app registration.", "Caller app registration", "API permissions", "Add a permission"));
+                content.Add(Portal($"On {caller}, select {resource.Name} → {(hop.Identity == ActingIdentity.DelegatedUser ? "Delegated permissions: choose the target scope (for example Orders.Read for a custom API or User.Read for Graph) because this call acts for a user" : "Application permissions: choose the target app role (for example Orders.Read.All for a custom API or User.Read.All for Graph) because this call has no user")}. Grant consent as required by the selected permission and tenant policy.", "Caller app registration", "API permissions", "Add a permission"));
             if (relationship.TenantBoundary.Value == TenantBoundary.CrossTenant)
-                content.Add(Text("Provision the caller's service principal and required consent or assignments in the resource tenant. Verify that the resource and chosen credential support this boundary. Acquire the token in the required resource-tenant context; do not assume home-tenant consent grants access elsewhere."));
+                content.Add(Text("In the resource tenant, provision the caller’s service principal and consent/assignments. Verify cross-tenant support and acquire the token in that tenant; home-tenant consent is not sufficient."));
             Add("permission-" + hop.RelationshipId, GuideSection.PermissionsAndConsent, "Allow " + caller + " to call " + resource.Name,
                 relationship.CallerComponentId, "Grant access for this caller and target only.", "The chosen identity has the required consent or resource assignment.", content,
                 [permissions, FlowSource(hop.Acquisition), .. (resource.Category.Value == ResourceCategory.AzureResource ? new[] { Source("Assign Azure roles", "https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal") } : Array.Empty<DocumentationSource>())], [hop.RelationshipId]);
@@ -120,30 +125,30 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             var decision = plan.Components.Single(c => c.ComponentId == component.Id);
             var outbound = plan.Relationships.Where(h => plan.Scenario.Relationships.Single(r => r.Id == h.RelationshipId).CallerComponentId == component.Id).ToArray();
             var validation = plan.ApiValidation.FirstOrDefault(v => v.ComponentId == component.Id);
-            var content = new List<GuideContent> { Text("Use the supported authentication library for this platform. Configure the tenant authority and component client ID from the new registration, or the selected host identity. Do not put confidential credentials into browser or desktop code.") };
-            if (decision.SignIn != SignInApproach.None) content.Add(Text("Configure the sign-in method selected for this component. Match the registered redirect URI to the library's callback. Handle canceled sign-in, consent and interaction-required responses through the library."));
+            var content = new List<GuideContent> { Text("Use the platform’s authentication library with this app’s tenant ID and client ID, or its managed identity. Keep credentials out of browser and desktop code.") };
+            if (decision.SignIn != SignInApproach.None) content.Add(Text("Match sign-in callbacks to the registered redirect URI; handle cancellation and interaction-required responses through the library."));
             if (plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.Multitenant)
-                content.Add(Text("For multi-tenant sign-in, use the organizational authority supported by the library and validate each issuer against its tenant. Define which organizations are allowed, onboard them with consent, and enforce that policy. Do not disable issuer validation."));
+                content.Add(Text("Use an organizational authority, allow only onboarded organizations and obtain their consent. Do not disable issuer validation."));
             if (plan.Scenario.Tenants.IncludesGuestUsers.Value)
-                content.Add(Text("For guest access, sign the guest in using the applicable resource tenant. Test an invited guest's consent, assignment and API authorization separately from a member user."));
+                content.Add(Text("For guest access, sign the guest in using the applicable resource tenant; verify guest consent, assignment and API access."));
             if (validation is not null)
-                content.Add(Text("Configure bearer-token authentication using the API's own audience and trusted tenant issuer metadata. Validate signature, issuer, audience and expiry. Enforce the required scopes for user tokens and app roles or explicit application access policy for application tokens. Reject unauthorized calls before processing them."));
+                content.Add(Text("Configure bearer-token validation against this API’s audience and trusted issuer; check signature and expiry. For v2 tokens use this API’s client ID as aud, e.g. 11111111-2222-3333-4444-555555555555; a v1 audience can be api://<api-client-id>. Enforce scp for user calls and roles or the resource’s application-access policy for app calls."));
             foreach (var hop in outbound)
                 content.Add(Text(hop.Acquisition switch {
-                    TokenAcquisition.OnBehalfOf => "Use on-behalf-of token acquisition with the incoming access token issued for this API and the API's protected credential. Request the downstream delegated scopes; never forward the incoming token to another audience. Return interaction-required challenges to the initiating client.",
-                    TokenAcquisition.ClientCredentials => "Acquire a token as the application using the configured certificate, federated assertion or managed identity. With client credentials, request the target resource's /.default scope and rely on its granted application permissions or resource roles.",
-                    TokenAcquisition.DeviceCode => "Use the library's device-code token acquisition. Display its code and sign-in instructions and handle cancellation, expiry and tenant policy restrictions.",
-                    _ => "Acquire a token for the target's delegated scopes through the authentication library using authorization code with PKCE. Use silent acquisition where possible and initiate interaction when required."
+                    TokenAcquisition.OnBehalfOf => "Use on-behalf-of with this API’s incoming user token and protected credential to request downstream scopes. Never forward the incoming token to another audience; return interaction-required challenges to the client.",
+                    TokenAcquisition.ClientCredentials => "Acquire a token as the application using its certificate, federated assertion or managed identity. Request the target resource’s /.default, backed by granted application permissions or resource roles.",
+                    TokenAcquisition.DeviceCode => "Display the library’s device-code sign-in prompt; handle cancellation, expiry and tenant policy restrictions.",
+                    _ => "Request the target’s delegated scopes using authorization code with PKCE; use silent acquisition when possible."
                 }));
-            if (outbound.Length > 0) content.Add(Text("Attach the target access token to the Authorization: Bearer header on calls to that resource. Keep separate tokens for different audiences. Use the library's token cache; for multiple server instances use a protected shared cache with a documented refresh and credential-rotation strategy."));
+            if (outbound.Length > 0) content.Add(Text("Send the target token in Authorization: Bearer. Use the library’s token cache; multiple server instances need a protected shared cache."));
             Add("configure-" + component.Id, GuideSection.Configuration, "Configure " + component.Name, component.Id,
                 "Implement sign-in, token acquisition and API authorization where required for this component.", "The component uses its own identity and the correct token and authorization settings.", content,
                 [Source("Platform implementation guidance", PlatformUrl(component.Stack.Value)), .. outbound.Select(h => FlowSource(h.Acquisition)), .. (validation is null ? Array.Empty<DocumentationSource>() : new[] { tokens }), .. (decision.SignIn == SignInApproach.None ? Array.Empty<DocumentationSource>() : new[] { FlowSource(decision.SignIn == SignInApproach.DeviceCode ? TokenAcquisition.DeviceCode : TokenAcquisition.AuthorizationCode) })], outbound.Select(h => h.RelationshipId));
         }
         Add("verify", GuideSection.TestAndTroubleshoot, "Verify the complete flow", first,
             "Run positive and negative access checks in your test tenant.", "Allowed calls succeed; missing, invalid and unauthorized tokens are rejected.",
-            [Text("Test each connection separately, then the complete chain. Confirm the intended user or application identity and target audience. Test a missing token, a token for another API, and an identity without the required permission. APIs should reject invalid authentication and denied authorization appropriately."),
-             Text("For multi-tenant or guest access, test the additional organizations or guests explicitly. Record consent and assignments in each applicable tenant. Export this guide before leaving the browser session.")], [tokens, permissions], plan.Relationships.Select(h => h.RelationshipId));
+            [Text("Test each connection and the full chain: authorized identity succeeds; missing or wrong-audience token returns 401; insufficient permission returns 403."),
+             Text("For multi-tenant or guest access, repeat tests with the intended organizations or guests and verify their consent and assignments.")], [tokens, permissions], plan.Relationships.Select(h => h.RelationshipId));
         return new() { PlanId = plan.Id, Architecture = plan, Versions = new(plan.Versions.Schema, plan.Versions.Rules, TemplateVersion),
             Steps = steps.ToImmutableArray(), Assumptions = plan.Assumptions.Add("Configuration checklist; complete runnable samples for additional platform families remain in progress."),
             Sources = sources.AddRange(steps.SelectMany(s => s.Sources)).DistinctBy(s => s.Url).ToImmutableArray() };

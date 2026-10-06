@@ -12,7 +12,7 @@ public sealed class MarkdownGuideExporter : IGuideExporter
         foreach(var h in guide.Architecture.Relationships) b.AppendLine($"- {h.RelationshipId}: {h.Identity}, {h.Acquisition}, audience `{h.AudienceValueKey}`, authorization `{h.Authorization.DeveloperValueKey}`");
         b.AppendLine("\n## Assumptions\n"); foreach(var a in guide.Assumptions) b.AppendLine("- "+a);
         foreach(var s in guide.Steps) {
-            b.AppendLine($"\n## {s.Title}\n\nStep ID: {s.Id} · component: {s.ComponentId}\n\n{s.Purpose}\n\nAction: {s.Action}\n");
+            b.AppendLine($"\n## {s.Title}\n\nStep ID: {s.Id} · component: {s.ComponentId}\n\n{s.Action}\n");
             foreach(var c in s.Content) switch(c) {
                 case InstructionContent i: b.AppendLine(i.Text+"\n"); break;
                 case PortalActionContent p: b.AppendLine(string.Join(" → ",p.Breadcrumbs)+"\n\n"+p.Action+"\n"); break;

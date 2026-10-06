@@ -11,15 +11,15 @@ public static class TopologyPresets
     public static ImmutableArray<TopologyPreset> All { get; } =
     [
         new("signin", "User sign-in", "A server web application with no API calls.", "User → Web app."),
-        new("client-api", "Application and API", "A browser application calling a custom API.", "Browser app → API."),
-        new("api-chain", "Web app and API chain", "A server web app calls one API, which calls another.", "Web app → API 1 → API 2."),
-        new("api-only", "API only", "An API validates tokens from callers outside this diagram.", "External caller → API."),
+        new("client-api", "Application and API", "A browser application calling a custom API.", "Browser app → Backend API."),
+        new("api-chain", "Web app and API chain", "A server web app calls one API, which calls another.", "Web app → Backend API → Downstream API."),
+        new("api-only", "API only", "An API validates tokens from callers outside this diagram.", "External caller → Backend API."),
         new("worker", "Background service", "A workload calls a protected resource as the application.", "Background app → Resource."),
         new("device", "Command-line sign-in", "A user signs in to a command-line application.", "User → Command-line app → Resource."),
         new("desktop", "Windows desktop", "A desktop application calls a protected resource.", "User → Desktop app → Resource."),
-        new("fan-out", "Multiple downstream APIs", "An API calls several resources with separate identity choices.", "API 1 → API 2 and another resource."),
-        new("second-tier", "Two middle-tier APIs", "An additional API continues the delegated user context.", "Web app → API 1 → API 2 → Resource."),
-        new("mixed-blazor", "Server and browser Blazor", "Separate server and browser components call a custom API.", "Browser and server → API.")
+        new("fan-out", "Multiple downstream APIs", "An API calls several resources with separate identity choices.", "Backend API → Downstream API and another resource."),
+        new("second-tier", "Two middle-tier APIs", "An additional API continues the delegated user context.", "Web app → Backend API → Downstream API → Resource."),
+        new("mixed-blazor", "Server and browser Blazor", "Separate server and browser components call a custom API.", "Browser and server → Backend API.")
     ];
 
     public static ArchitectureScenario Create(string presetId)
@@ -38,10 +38,10 @@ public static class TopologyPresets
             IncomingRelationshipId = incoming is null ? Fact<string>.Unknown() : Fact<string>.Supplied(incoming)
         };
         var web = Component("web", "Web App", ImplementationStack.BlazorServer, true);
-        var api = Component("api-a", "API 1", ImplementationStack.AspNetCoreApi);
-        var apiB = Component("api-b", "API 2", ImplementationStack.AspNetCoreApi);
-        var orders = Resource("orders", "API 1", ResourceCategory.CustomResource, api.Id);
-        var inventory = Resource("inventory", "API 2", ResourceCategory.CustomResource, apiB.Id);
+        var api = Component("api-a", "Backend API", ImplementationStack.AspNetCoreApi);
+        var apiB = Component("api-b", "Downstream API", ImplementationStack.AspNetCoreApi);
+        var orders = Resource("orders", "Backend API", ResourceCategory.CustomResource, api.Id);
+        var inventory = Resource("inventory", "Downstream API", ResourceCategory.CustomResource, apiB.Id);
         var scenario = new ArchitectureScenario { Id = presetId, SchemaVersion = RuleCatalog.SchemaVersion };
         return presetId switch
         {

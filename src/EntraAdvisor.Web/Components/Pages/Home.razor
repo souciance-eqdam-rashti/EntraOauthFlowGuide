@@ -21,9 +21,9 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  var step = guide.Steps[W.ActiveStep];
  <div class="implementation-layout">
  <section class="implementation-step-pane" aria-label="Selected implementation step" id="implementation-step-pane">
- <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId"/><p class="step-action">@step.Action</p> }
+ <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId"/> }
  <CompactStepContent Step="step" Plan="guide.Architecture"/>
- @if(step.Section != GuideSection.Prerequisites) { <p class="expected"><strong>Expected result:</strong> @step.ExpectedResult</p> }@foreach(var source in step.Sources) { <p><a href="@source.Url" target="_blank" rel="noopener">@source.Title</a></p> }
+ @foreach(var source in step.Sources) { <p><a href="@source.Url" target="_blank" rel="noopener">@source.Title</a></p> }
  </article></section>
  <section class="implementation-step-selector" aria-label="Implementation steps"><h2>Implementation steps</h2><ol class="step-list">@for(var i=0;i<guide.Steps.Length;i++) { var index=i; <li><button aria-current="@(i == W.ActiveStep ? "step" : null)" @onclick="() => SelectStep(index)">@guide.Steps[i].Title</button></li> }</ol></section>
  </div>
