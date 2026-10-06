@@ -169,3 +169,5 @@ main.implement-page{background:var(--mud-palette-background)!important}
 .group-action-rows.single-action { list-style:none; padding-left:0; }
 
 .app-loading { margin:24px; color:#172b4d; font-family:Segoe UI,Arial,sans-serif; }
+
+.advisor-appbar .core-concepts-button{margin-left:auto;flex-shrink:0}.advisor-appbar .mud-toolbar{flex-wrap:wrap}@media(max-width:420px){.advisor-appbar .mud-toolbar{gap:4px}.advisor-appbar .core-concepts-button{font-size:12px;padding:6px}.advisor-appbar .brand-title{padding:6px!important}}

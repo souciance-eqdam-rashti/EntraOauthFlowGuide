@@ -1,0 +1,66 @@
+<MudDialog Class="core-concepts-dialog">
+    <DialogContent>
+        <p class="concepts-intro">A quick reference to OAuth, OpenID Connect and Microsoft Entra. Expand a section for definitions and examples.</p>
+        @foreach (var section in Sections)
+        {
+            <details class="concept-section">
+                <summary>@section.Title</summary>
+                <div class="concept-section-content">
+                    @foreach (var concept in section.Concepts)
+                    {
+                        <article class="concept-entry">
+                            <h3>@concept.Title</h3>
+                            <p>@concept.Description</p>
+                            <p class="concept-example"><strong>Example:</strong> @concept.Example</p>
+                            <MudLink Href="@concept.Url" Target="_blank" rel="noopener noreferrer" Typo="Typo.body2">Microsoft Learn: @concept.Title ↗</MudLink>
+                        </article>
+                    }
+                </div>
+            </details>
+        }
+    </DialogContent>
+</MudDialog>
+@code {
+    private sealed record Concept(string Title, string Description, string Example, string Url);
+    private sealed record Section(string Title, Concept[] Concepts);
+    private const string Learn = "https://learn.microsoft.com/en-us/entra/identity-platform/";
+    private static readonly Section[] Sections =
+    [
+        new("Tokens · sign-in and API access", [
+            new("Access token", "A credential for calling a particular API. The receiving API validates it and checks the permissions; the client treats it as opaque.", "Send a Backend API access token as Authorization: Bearer when calling that API, not Microsoft Graph.", Learn + "access-tokens"),
+            new("ID token", "An OpenID Connect token that tells the client about the authenticated user. It establishes sign-in; it is not an API access credential.", "The browser app uses an ID token to establish the user's session, and an access token to call the API.", Learn + "id-tokens"),
+            new("Audience, issuer and claims", "Claims describe the token. aud identifies its intended recipient; iss identifies its issuer. For a custom API's v2 access token, aud is the API's application (client) ID. The API also validates signature and expiry before enforcing authorization.", "A valid token issued for Graph must be rejected by your Backend API because the audience is different.", Learn + "access-token-claims-reference"),
+            new("Refresh token", "Lets a supported client obtain new access tokens without asking the user to sign in each time. Let the authentication library manage token storage and renewal; renewal can still require interaction.", "An expired access token is replaced through the library's silent acquisition; if interaction is required, the app prompts the user.", Learn + "refresh-tokens")
+        ]),
+        new("Permissions · scopes and roles", [
+            new("Delegated permissions and scopes", "The app acts for a signed-in user. A scope describes an operation the client may request; the API checks granted scopes in scp and the user's access to the data.", "A browser requests api://<backend-client-id>/Orders.Read. The API checks Orders.Read before returning orders the user may access. This is an example scope.", Learn + "permissions-consent-overview"),
+            new("Application permissions", "The app acts as itself without a signed-in user. APIs commonly expose these permissions as app roles granted to the calling application's service principal; the API enforces the roles claim.", "A scheduled importer is assigned an Orders.Import application role. This is an example permission, not a delegated user scope.", Learn + "permissions-consent-overview"),
+            new("App roles and Azure RBAC", "App roles are application-defined access roles and can be assigned to users/groups or applications, depending on their definition. Azure RBAC separately controls Azure resource access; a scope or app role does not automatically grant an Azure role.", "An app's Approver user role and an Azure Storage Blob Data Reader assignment authorize different resources.", Learn + "howto-add-app-roles-in-apps"),
+            new("The .default scope", "Requests the permissions already configured and granted for a resource. Client credentials uses <resource>/.default; it does not request individual delegated scope names.", "An app-only Graph client requests https://graph.microsoft.com/.default after the required application permissions are granted.", Learn + "scopes-oidc")
+        ]),
+        new("Consent · granting access", [
+            new("User and admin consent", "Consent grants permissions to an app. User consent is subject to tenant policy; administrator consent is required for application permissions and some delegated permissions. Configuring API permissions alone does not grant consent.", "A delegated scope needs admin consent when the permission requires it or tenant policy prevents user consent. Consent does not replace the API's authorization checks.", "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/user-admin-consent-overview")
+        ]),
+        new("Registration · identifiers and manifest", [
+            new("App registration and enterprise application", "An app registration defines the application in its home tenant. An enterprise application is its service principal: the local identity used for consent and assignments in a tenant.", "A multitenant app has one home registration and a service principal in each customer tenant that onboards it.", Learn + "app-objects-and-service-principals"),
+            new("Client ID and tenant ID", "Application (client) ID identifies the registered app; Directory (tenant) ID identifies the directory. Neither is a secret. The caller's client ID and the API's client ID serve different purposes.", "Browser sign-in uses the browser registration's client ID; Backend API token validation uses the API registration's client ID as its v2 audience.", Learn + "quickstart-register-app"),
+            new("Redirect URI", "The registered callback destination for an interactive sign-in response. Configure the correct platform and the exact callback used by the app's authentication library.", "A browser callback such as https://<your-app>/auth/callback must match its registered redirect URI.", Learn + "reply-url"),
+            new("Application manifest", "The registration's JSON settings, using Microsoft Graph property names. It includes supported accounts, API scopes, app roles and token settings; preserve unrelated fields when editing it.", "For a custom API using v2 access tokens, set api.requestedAccessTokenVersion to 2 in the API registration, not the browser registration.", Learn + "reference-microsoft-graph-app-manifest")
+        ]),
+        new("Tenants · single tenant, multitenant and guests", [
+            new("Single tenant and multitenant", "Single-tenant apps accept accounts in their home directory, including invited guests. Multitenant apps can accept accounts from other Entra organizations; each customer's permissions and onboarding still need to be handled.", "An internal employee app uses one tenant; a business SaaS app supports customer tenants and validates its accepted issuers and tenants.", Learn + "single-and-multi-tenant-apps"),
+            new("Guest users and tenant context", "A guest has a representation in the resource tenant even when their home identity belongs elsewhere. Guest access is distinct from making an app multitenant.", "Invite a partner into your tenant and assign access to your single-tenant app; evaluate authorization in that resource tenant.", "https://learn.microsoft.com/en-us/entra/external-id/what-is-b2b"),
+            new("Authority", "The Entra endpoint and tenant context used by the authentication library. A tenant-specific authority targets one directory; organizations supports organizational accounts across tenants. This does not itself grant access.", "Use https://login.microsoftonline.com/<tenant-id> for one tenant, or organizations for an organizational multitenant sign-in design.", Learn + "msal-client-application-configuration")
+        ]),
+        new("Identities · public clients and credentials", [
+            new("Public and confidential clients", "Browser and installed apps cannot securely keep a client secret. Server apps can protect credentials and are confidential clients; do not ship secrets in browser configuration.", "A browser uses authorization code with PKCE; a server background service authenticates using its protected credential.", Learn + "msal-client-applications"),
+            new("Certificates and managed identities", "A confidential app can authenticate with a certificate. A managed identity is an Azure-managed workload identity that avoids an app-managed secret; it still needs permission or resource-role assignments.", "An Azure-hosted worker uses managed identity plus a Storage data-role assignment to access blobs.", "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview")
+        ]),
+        new("Flows · choosing how tokens are acquired", [
+            new("Authorization code with PKCE", "An interactive flow: the user signs in, the app receives an authorization code and exchanges it for tokens. PKCE binds the exchange to the initiating client. OpenID Connect adds user sign-in to OAuth's access delegation.", "User → Browser App → Backend API: the browser signs in and acquires the API's delegated access token.", Learn + "v2-oauth2-auth-code-flow"),
+            new("Client credentials", "An app authenticates as itself to obtain an app-only access token. There is no signed-in user and no delegated scp permission; configure and grant the API's application permissions.", "A nightly worker calls an API using its own identity and an assigned application role.", Learn + "v2-oauth2-client-creds-grant-flow"),
+            new("On-behalf-of (OBO)", "A middle-tier API exchanges an incoming user access token for a delegated token for a downstream API. It authenticates as a confidential client and preserves the user context.", "Browser → Backend API → Downstream API: the backend acquires a new downstream token instead of forwarding a token with the wrong audience.", Learn + "v2-oauth2-on-behalf-of-flow"),
+            new("Device code", "An interactive flow for devices or command-line apps without a suitable embedded browser. The user completes sign-in in another browser; tenant policy must permit the flow.", "A command-line tool displays a code and asks the user to sign in on another device.", Learn + "v2-oauth2-device-code")
+        ])
+    ];
+}

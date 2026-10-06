@@ -4,7 +4,7 @@
 @inject IDialogService Dialogs
 @using EntraAdvisor.Guide
 <PageTitle>Entra OAuth Advisor</PageTitle>
-<MudAppBar Fixed="false" Elevation="0" Class="advisor-appbar"><MudIcon Icon="@Icons.Material.Outlined.AccountTree" Color="Color.Primary" /><MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="Reset" Class="brand-title">Entra OAuth Advisor</MudButton></MudAppBar>
+<MudAppBar Fixed="false" Elevation="0" Class="advisor-appbar"><MudIcon Icon="@Icons.Material.Outlined.AccountTree" Color="Color.Primary" /><MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="Reset" Class="brand-title">Entra OAuth Advisor</MudButton><MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="OpenConcepts" StartIcon="@Icons.Material.Outlined.MenuBook" Class="core-concepts-button">Core concepts</MudButton></MudAppBar>
 <main class="@(W.Stage == JourneyStage.Implement ? "implement-page" : "")">
 <nav aria-label="Journey"><MudTabs ActivePanelIndex="@((int)W.Stage)" ActivePanelIndexChanged="index => Navigate((JourneyStage)index)" Elevation="0" Rounded="true" Class="journey-tabs"><MudTabPanel Text="Design" Icon="@Icons.Material.Outlined.Tune" /><MudTabPanel Text="Implement" Icon="@Icons.Material.Outlined.Code" Disabled="@(W.Session.Evaluation.Plan is null)" /></MudTabs></nav>
 <div class="workspace choosing-topology"><section class="work-panel">
@@ -86,6 +86,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  }
  private void CompleteStep() { W.SetCompletion(CompletionState.Complete); if(W.Guide is {} g && W.ActiveStep+1 < g.Steps.Length) SelectStep(W.ActiveStep+1); }
  private void Reset() { W.Reset(); history.Clear(); drafts.Clear(); screen=W.Session.NextScreen; message=""; focus=true; }
+ private async Task OpenConcepts() => await Dialogs.ShowAsync<CoreConceptsDialog>("Core concepts", new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true });
  private async Task OpenDiagram() { if(W.Guide is null) return; await Dialogs.ShowAsync<DiagramOverviewDialog>("Diagram Overview", new DialogParameters { [nameof(DiagramOverviewDialog.Plan)] = W.Guide.Architecture }, new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true }); }
  private async Task CloseDiagram() => await JS.InvokeVoidAsync("advisor.closeDiagram");
  private async Task Export() { if(!W.GuideIsCurrent) return; var text=new MarkdownGuideExporter().ExportMarkdown(W.Guide!);  try { await JS.InvokeVoidAsync("advisor.download","entra-implementation-guide.md",text); message=""; } catch(JSException) { message="Download could not start. Please try again."; } }

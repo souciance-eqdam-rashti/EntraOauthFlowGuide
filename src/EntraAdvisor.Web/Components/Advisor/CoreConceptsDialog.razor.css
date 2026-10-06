@@ -1,0 +1,9 @@
+ .concepts-intro{margin:0 0 16px;color:var(--mud-palette-text-secondary);font-size:14px;line-height:1.6}
+.concept-section{border-bottom:1px solid var(--mud-palette-divider);padding:0}
+.concept-section summary{cursor:pointer;padding:16px 4px;font-size:16px;font-weight:600;color:var(--mud-palette-text-primary)}
+.concept-section summary:focus-visible{outline:2px solid var(--mud-palette-primary);outline-offset:2px;border-radius:4px}
+.concept-section-content{padding:0 4px 20px}
+.concept-entry+.concept-entry{margin-top:24px}
+.concept-entry h3{font-size:16px;font-weight:600;margin:0 0 6px;color:var(--mud-palette-text-primary)}
+.concept-entry p{font-size:15px;line-height:1.6;margin:0 0 8px;overflow-wrap:anywhere;color:var(--mud-palette-text-primary)}
+.concept-entry .concept-example{border-left:2px solid var(--mud-palette-divider);padding-left:12px;font-size:14px}
