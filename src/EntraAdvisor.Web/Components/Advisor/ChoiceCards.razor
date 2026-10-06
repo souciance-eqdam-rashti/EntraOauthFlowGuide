@@ -1,21 +1,13 @@
 <fieldset class="question" aria-describedby="@(Question.Id + "-help")">
     <legend>@Question.Prompt</legend>
     <p class="question-explanation">@Explanation</p>
-    <div class="choices">
-        @foreach (var option in Question.Options)
-        {
-            var optionId = Question.Id + "-" + option.Id;
-            <label class="choice @(Selected == option.Id ? "selected" : "")" for="@optionId">
-                <input id="@optionId" type="radio" name="@Question.Id" value="@option.Id" checked="@(Selected == option.Id)"
-                       aria-describedby="@(optionId + "-description")" @onchange="() => SelectedChanged.InvokeAsync(option.Id)" />
-                <span class="choice-body">
-                    <span class="choice-title"><span aria-hidden="true" class="choice-icon">@(option.RepresentsUnknown ? "?" : "◇")</span> @option.Title</span>
-                    <span class="choice-description" id="@(optionId + "-description")">@option.Description</span>
-                    @if (Selected == option.Id) { <span class="selected-label">✓ Selected</span> }
-                </span>
-            </label>
+    <MudRadioGroup T="string" Value="Selected" ValueChanged="SelectedChanged" Class="choices mud-choice-group">
+        @foreach (var option in Question.Options) {
+            <MudPaper Outlined="true" Elevation="0" Class="@($"question-option {(Selected == option.Id ? "selected" : "")}")">
+                <MudRadio T="string" Value="@option.Id" Color="Color.Primary" Class="option-radio"><div><MudText Typo="Typo.subtitle1">@option.Title</MudText><MudText Typo="Typo.body2" Color="Color.Default">@option.Description</MudText></div></MudRadio>
+            </MudPaper>
         }
-    </div>
+    </MudRadioGroup>
     <section class="question-help" id="@(Question.Id + "-help")" aria-labelledby="@(Question.Id + "-help-title")">
         <h2 id="@(Question.Id + "-help-title")">Help with this question</h2>
         <p>@Help</p>

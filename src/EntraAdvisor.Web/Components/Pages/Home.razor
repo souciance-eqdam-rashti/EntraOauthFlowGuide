@@ -1,19 +1,20 @@
 @page "/"
 @inject AdvisorWorkspace W
 @inject IJSRuntime JS
+@inject IDialogService Dialogs
 @using EntraAdvisor.Guide
 <PageTitle>Entra OAuth Advisor</PageTitle>
-<header><a href="/" @onclick="Reset" @onclick:preventDefault>◈ Entra OAuth Advisor</a><span>Architecture → implementation</span><button @onclick="Reset">Start over</button></header>
+<MudAppBar Fixed="false" Elevation="0" Class="advisor-appbar"><MudIcon Icon="@Icons.Material.Outlined.AccountTree" Color="Color.Primary" /><MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="Reset" Class="brand-title">Entra OAuth Advisor</MudButton><MudSpacer /><MudText Typo="Typo.body2" Class="header-caption">Architecture → implementation</MudText><MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="Reset" StartIcon="@Icons.Material.Outlined.RestartAlt">Start over</MudButton></MudAppBar>
 <main class="@(W.Stage == JourneyStage.Implement ? "implement-page" : "")">
-<nav aria-label="Journey">@foreach(var stage in Enum.GetValues<JourneyStage>()) { <button aria-current="@(W.Stage == stage ? "step" : null)" disabled="@(stage != JourneyStage.Design && W.Session.Evaluation.Plan is null)" @onclick="() => Navigate(stage)">@((int)stage+1). @stage</button> }</nav>
+<nav aria-label="Journey"><MudTabs ActivePanelIndex="@((int)W.Stage)" ActivePanelIndexChanged="index => Navigate((JourneyStage)index)" Elevation="0" Rounded="true" Class="journey-tabs"><MudTabPanel Text="Design" Icon="@Icons.Material.Outlined.Tune" /><MudTabPanel Text="Implement" Icon="@Icons.Material.Outlined.Code" Disabled="@(W.Session.Evaluation.Plan is null)" /></MudTabs></nav>
 <div class="workspace choosing-topology"><section class="work-panel">
 <p class="eyebrow">@W.Stage · Enterprise Entra identities</p><h1 tabindex="-1" @ref="heading">@Title</h1><p role="status" class="feedback">@message</p>
 @if(W.Stage == JourneyStage.Design) {
  if(!W.Started) {
- <p>Select a card to continue to the design questions. Your implementation guide appears once those questions are answered.</p><fieldset><legend>What are you building?</legend><div class="choices">@foreach(var p in TopologyPresets.All) { <label class="choice topology-choice" @onclick="() => SelectPreset(p.Id)"><input type="radio" name="topology"/><span class="choice-body"><strong>@p.Title</strong><span>@p.Description</span><span class="use-case">Example: @p.Example</span><span class="card-action">Select and continue →</span></span></label> }</div></fieldset>
+ <p>Select a card to continue to the design questions. Your implementation guide appears once those questions are answered.</p><fieldset><legend>What are you building?</legend><MudRadioGroup T="string" ValueChanged="SelectPreset" Class="choices topology-options">@foreach(var p in TopologyPresets.All) { <MudPaper Outlined="true" Elevation="0" Class="topology-option"><MudRadio T="string" Value="@p.Id" Color="Color.Primary"><span class="choice-body"><strong>@p.Title</strong><span>@p.Description</span><span class="use-case">Example: @p.Example</span><span class="card-action">Select and continue →</span></span></MudRadio></MudPaper> }</MudRadioGroup></fieldset>
  } else if(screen is not null) {
  <p>@screen.Section</p>@foreach(var q in screen.Questions) { <p class="question-context">@Context(q.SuppliesFact.EntityId)</p><ChoiceCards @key="q.Id" Question="q" Selected="@Selected(q.Id)" SelectedChanged="value => drafts[q.Id] = value"/> }
- <div class="actions"><button @onclick="Back">← Back</button><button class="primary" disabled="@screen.Questions.Any(q => Selected(q.Id) is null)" @onclick="Continue">Continue →</button></div>
+ <div class="actions"><MudButton Variant="Variant.Outlined" OnClick="Back" StartIcon="@Icons.Material.Outlined.ArrowBack">Back</MudButton><MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@screen.Questions.Any(q => Selected(q.Id) is null)" OnClick="Continue" EndIcon="@Icons.Material.Outlined.ArrowForward">Continue</MudButton></div>
  } else if(W.Session.Evaluation.Plan is not null) { <button class="primary" @onclick="() => Navigate(JourneyStage.Implement)">Open implementation →</button> }
  @foreach(var issue in W.Session.Evaluation.Issues.Where(_ => W.Session.Evaluation.Status != EvaluationStatus.NeedsClarification)) { <div class="notice"><strong>@issue.Explanation</strong><p>@issue.NextAction</p></div> }
 }
@@ -25,11 +26,18 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  <CompactStepContent Step="step" Plan="guide.Architecture"/>
  @foreach(var source in step.Sources) { <p><a href="@source.Url" target="_blank" rel="noopener">@source.Title</a></p> }
  </article></section>
- <section class="implementation-step-selector" aria-label="Implementation steps"><h2>Implementation steps</h2><ol class="step-list">@for(var i=0;i<guide.Steps.Length;i++) { var index=i; <li><button aria-current="@(i == W.ActiveStep ? "step" : null)" @onclick="() => SelectStep(index)">@guide.Steps[i].Title</button></li> }</ol></section>
+ <section class="implementation-step-selector" aria-label="Implementation steps">
+ <MudText Typo="Typo.overline" Class="stepper-heading">IMPLEMENTATION JOURNEY</MudText>
+ <MudStepper @key="guide.PlanId" Vertical="true" NonLinear="true" ScrollableNavigation="false" ActiveIndex="W.ActiveStep" ActiveIndexChanged="SelectStep" Class="implementation-stepper">
+ <ChildContent>@foreach(var item in guide.Steps) { <MudStep Title="@item.Title" /> }</ChildContent>
+ <ActionContent></ActionContent>
+ </MudStepper>
+ <MudPaper Outlined="true" Elevation="0" Class="implementation-summary"><MudText Typo="Typo.subtitle2">Implementation steps</MudText><MudText Typo="Typo.caption" Color="Color.Secondary">Step @(W.ActiveStep+1) of @guide.Steps.Length · @Name(step.ComponentId)</MudText><MudText Typo="Typo.body2">@step.Title</MudText></MudPaper>
+ </section>
  </div>
- <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"><button @onclick="Export">Export Markdown ↓</button><button @onclick="OpenDiagram">Diagram Overview</button></ValidationExport>
+ <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"><MudButton Variant="Variant.Outlined" OnClick="Export" StartIcon="@Icons.Material.Outlined.FileDownload">Export Markdown</MudButton><MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OpenDiagram" StartIcon="@Icons.Material.Outlined.AccountTree">Diagram Overview</MudButton></ValidationExport>
 
- <dialog id="diagram-overview" class="diagram-dialog" aria-labelledby="diagram-title"><div class="diagram-dialog-header"><h2 id="diagram-title">Diagram Overview</h2><button autofocus @onclick="CloseDiagram" aria-label="Close diagram overview">Close ✕</button></div><AuthenticationFlow Plan="guide.Architecture" ShowTechnical="true"/></dialog>
+
 
 }
 </section></div></main>
@@ -59,7 +67,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  private void Generate() { message=""; W.SetGuide(new ArchitectureGuideGenerator().Generate(W.Session.Evaluation.Plan!,new([]))); focus=true; }
  private void SelectStep(int i) { W.SelectStep(i); focusStep=true; }
  private void Reset() { W.Reset(); history.Clear(); drafts.Clear(); screen=W.Session.NextScreen; message=""; focus=true; }
- private async Task OpenDiagram() => await JS.InvokeVoidAsync("advisor.openDiagram");
+ private async Task OpenDiagram() { if(W.Guide is null) return; await Dialogs.ShowAsync<DiagramOverviewDialog>("Diagram Overview", new DialogParameters { [nameof(DiagramOverviewDialog.Plan)] = W.Guide.Architecture }, new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true }); }
  private async Task CloseDiagram() => await JS.InvokeVoidAsync("advisor.closeDiagram");
  private async Task Copy(string value) { try { await JS.InvokeVoidAsync("advisor.copy",value); message="Copied to clipboard."; } catch(JSException) { message="Clipboard unavailable. Select and copy the displayed text."; } }
  private async Task Export() { if(!W.GuideIsCurrent) return; var text=new MarkdownGuideExporter().ExportMarkdown(W.Guide!);  try { await JS.InvokeVoidAsync("advisor.download","entra-implementation-guide.md",text); message=""; } catch(JSException) { message="Download could not start. Please try again."; } }

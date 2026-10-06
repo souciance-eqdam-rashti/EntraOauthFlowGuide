@@ -1,7 +1,17 @@
 ﻿@inherits LayoutComponentBase
 
 @Body
-<FluentProviders />
+<MudThemeProvider Theme="theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+@code {
+ private readonly MudTheme theme = new() {
+  PaletteLight = new PaletteLight { Primary = "#2563eb", Secondary = "#0f766e", Background = "#f4f6fa", Surface = "#ffffff", TextPrimary = "#172b4d", TextSecondary = "#64748b", AppbarBackground = "#ffffff", AppbarText = "#172b4d" },
+  LayoutProperties = new LayoutProperties { DefaultBorderRadius = "8px" },
+  Typography = new Typography { Default = new DefaultTypography { FontFamily = ["Segoe UI", "Arial", "sans-serif"] }, Button = new ButtonTypography { TextTransform = "none", FontWeight = "600" } }
+ };
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.

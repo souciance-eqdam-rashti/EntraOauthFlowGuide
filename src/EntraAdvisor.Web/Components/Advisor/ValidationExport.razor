@@ -1,6 +1,6 @@
 @using EntraAdvisor.Guide
 <section class="implementation-exports" aria-label="Implementation exports">
-    <div class="actions">@ChildContent<button @onclick="() => Export(ValidationScriptFormat.CurlBash)">Export curl (Bash) ↓</button><button @onclick="() => Export(ValidationScriptFormat.CurlWindows)">Export curl (Windows) ↓</button><button @onclick="() => Export(ValidationScriptFormat.PowerShell)">Export PowerShell ↓</button></div>
+    <div class="actions">@ChildContent<MudButton Variant="Variant.Outlined" OnClick="() => Export(ValidationScriptFormat.CurlBash)" StartIcon="@Icons.Material.Outlined.FileDownload">Export curl (Bash)</MudButton><MudButton Variant="Variant.Outlined" OnClick="() => Export(ValidationScriptFormat.CurlWindows)" StartIcon="@Icons.Material.Outlined.FileDownload">Export curl (Windows)</MudButton><MudButton Variant="Variant.Outlined" OnClick="() => Export(ValidationScriptFormat.PowerShell)" StartIcon="@Icons.Material.Outlined.FileDownload">Export PowerShell</MudButton></div>
     @if(status.Length > 0) { <p role="status">@status</p> }
 </section>
 @code {

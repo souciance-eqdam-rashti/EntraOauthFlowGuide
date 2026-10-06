@@ -1,10 +1,10 @@
 using EntraAdvisor.Web.Components;
-using Microsoft.FluentUI.AspNetCore.Components;
+using MudBlazor.Services;
 using EntraAdvisor.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
-builder.Services.AddFluentUIComponents();
+builder.Services.AddMudServices();
 builder.Services.AddScoped<AdvisorWorkspace>();
 
 // Add services to the container.

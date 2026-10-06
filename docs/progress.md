@@ -284,3 +284,6 @@ Next action: collect feedback on the step sequence; continue remaining milestone
 
 ## Implementation feedback: compact configuration and valid identity choices
 Removed value-guidance boxes, shortened configuration actions, added explicit conditional delegated and mandatory application admin-consent actions, filtered unsupported Managed Identity and OBO federation choices, and made the title restart the design. Credential answers now invalidate when tenant boundaries change. Verified title navigation and backend presentation in the browser.
+
+## MudBlazor UI preview
+Replaced Fluent UI infrastructure with MudBlazor 9.11.0. Added theme, app bar, journey tabs, radio choices, export buttons and diagram dialog. Implementation uses a freely selectable vertical MudStepper above its selected-step summary in the right pane, with instructions on the left. Verified step selection, questionnaire and dialog in browser; the 1280x720 implementation viewport fits all export buttons and summary. Build clean and 105 regression tests passed.
