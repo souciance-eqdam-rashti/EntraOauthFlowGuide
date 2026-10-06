@@ -243,3 +243,15 @@ Validation: solution build succeeded with zero warnings/errors. Final dotnet tes
 Role reference: https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent (checked 2026-10-06). Cloud Application Administrator / Application Administrator covers general app configuration and consent; Microsoft Graph application permissions require Privileged Role Administrator. Azure resource role assignments additionally require an authorized role at the resource scope.
 
 Next action: collect feedback on this revised page, then continue remaining milestone 4 platform template coverage. No further permission is needed for refinements within this redesign.
+
+## Implementation layout feedback — complete, 2026-10-06
+
+Authorization: user requested six further UX changes and a commit directly from the main local folder.
+
+Completed: removed the Recommendation stage; the completed questionnaire generates and opens implementation directly. Selected step content appears in a separate left pane beside the step selector on the right. Both panes scroll independently; selecting a step resets and focuses the reading pane without scrolling the document. Removed implementation Back/Next controls. The bottom toolbar now contains Export Markdown, Diagram Overview, curl Bash, curl Windows and PowerShell buttons, without the validation heading or explanatory text. Diagram Overview opens the existing platform, flow, authentication-method and setup-responsibility content in a native modal dialog; Close and Escape dismiss it with focus restored to the trigger. Flow diagrams no longer display numbered list markers. Narrow screens use a compact selector above the reading pane.
+
+Affected files: Home.razor, AdvisorWorkspace.cs, ValidationExport.razor, advisor.js, app.css, README.md and this progress record.
+
+Validation: dotnet test tests/EntraAdvisor.Tests --no-restore -m:1 -p:UseSharedCompilation=false passed all 101 tests. Browser walkthrough confirmed direct Design to Implement navigation, two-pane layout, step switching, bottom toolbar, modal display, marker removal and Escape focus restoration. Screenshot saved in the coding worktree at .artifacts/implementation-two-pane.png. The app was rebuilt and restarted from C:/playground/ffcg/github/EntraOauthFlowGuide on http://localhost:5077/. No live Entra or tenant changes were performed.
+
+Next action: collect layout feedback, then continue the remaining milestone 4 platform templates. This commit is local; publishing it was not requested in this feedback turn.

@@ -1,4 +1,7 @@
 window.advisor = {
+ openDiagram: () => document.getElementById('diagram-overview').showModal(),
+ closeDiagram: () => document.getElementById('diagram-overview').close(),
+ resetStepPane: () => { document.getElementById('implementation-step-pane').scrollTop = 0; },
  copy: async text => {
    // Synchronous fallback also works in embedded browsers without Clipboard API support.
    const area=document.createElement('textarea'); area.value=text; area.style.position='fixed'; area.style.opacity='0'; document.body.append(area);

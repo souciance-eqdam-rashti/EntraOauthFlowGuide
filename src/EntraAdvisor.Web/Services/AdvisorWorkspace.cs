@@ -6,7 +6,7 @@ using EntraAdvisor.Guide.Contracts;
 
 namespace EntraAdvisor.Web.Services;
 
-public enum JourneyStage { Design, Recommendation, Implement }
+public enum JourneyStage { Design, Implement }
 
 /// <summary>Circuit-scoped state; no credentials, tokens, database or browser persistence.</summary>
 public sealed class AdvisorWorkspace

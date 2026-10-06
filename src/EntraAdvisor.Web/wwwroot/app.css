@@ -28,3 +28,12 @@ nav{flex-wrap:wrap}
 @media(max-width:1100px){.workspace{grid-template-columns:minmax(0,1fr)}aside{position:static;grid-row:auto;max-height:none;overflow:visible}.desktop-preview{display:none}.mobile-preview{display:block;border:0;padding:0}.preview-purpose{display:none}}
 @media(max-width:600px){header{flex-wrap:wrap}.flow-line strong{padding:10px}.step-list span{float:none;display:block}.step-list{max-height:min(260px,40dvh)}}
 .question-help select{display:block;width:100%;max-width:100%;margin:8px 0;padding:10px;font:inherit;border:1px solid #b6c9d1;border-radius:7px;background:white;color:#20343f}
+
+/* Keep step selection and reading in separate panes; exports stay below both. */
+.implementation-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,330px);gap:24px;align-items:stretch}
+.implementation-step-pane,.implementation-step-selector{min-width:0;background:white;border:1px solid #d8e4e9;border-radius:12px;padding:24px;height:clamp(360px,65dvh,800px);overflow-y:auto;overscroll-behavior:contain}
+.implementation-step-pane h2{margin-top:8px}.implementation-step-selector h2{margin-top:0;font-size:19px}.implementation-step-selector .step-list{padding-left:22px;max-height:none}.implementation-step-selector .step-list button{white-space:normal}
+.implementation-exports .actions{margin:20px 0 0}.flow-sequences{list-style:none;padding-left:0}
+.diagram-dialog{width:min(1100px,calc(100vw - 32px));max-height:85dvh;border:1px solid #cbd9e0;border-radius:16px;padding:24px;background:#f5f8fa;color:#20343f;overflow-y:auto}
+.diagram-dialog::backdrop{background:rgba(20,40,50,.55)}.diagram-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:-24px;background:#f5f8fa;padding:12px 0;z-index:1}.diagram-dialog-header h2{margin:0}
+@media(max-width:700px){.implementation-layout{grid-template-columns:minmax(0,1fr);gap:16px}.implementation-step-selector{grid-row:1;height:auto;max-height:220px;padding:16px}.implementation-step-pane{height:60dvh;padding:16px}.diagram-dialog{padding:16px}.diagram-dialog-header{top:-16px}}

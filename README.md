@@ -2,7 +2,7 @@
 
 A .NET application that will help developers choose Microsoft Entra authentication approaches and work through a sequential setup guide.
 
-Current status: milestone 4 setup-checklist checkpoint complete. Design → Recommendation → Implement is available, including a fresh-start single-tenant Blazor server → API A → API B delegated certificate guide, Back/Next navigation, component-specific authentication links, syntax-highlighted code, copy feedback, Markdown export and all-connection Bash curl/Windows curl/PowerShell validation scripts. Ready architectures now have exportable configuration checklists and official platform/flow links. Complete runnable templates beyond the delegated chain remain milestone 4 work; live tenant verification is milestone 5. See [progress](docs/progress.md) for the approved scope and exact resume point.
+Current status: milestone 4 setup-checklist checkpoint complete. Design → Implement is available, including a fresh-start single-tenant Blazor server → API A → API B delegated certificate guide, a two-pane step selector and reading view, modal Diagram Overview, component-specific authentication links, syntax-highlighted code, copy feedback, Markdown export and all-connection Bash curl/Windows curl/PowerShell validation scripts. Ready architectures now have exportable configuration checklists and official platform/flow links. Complete runnable templates beyond the delegated chain remain milestone 4 work; live tenant verification is milestone 5. See [progress](docs/progress.md) for the approved scope and exact resume point.
 
 ## Run locally
 

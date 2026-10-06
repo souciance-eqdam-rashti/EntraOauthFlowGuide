@@ -1,13 +1,12 @@
 @using EntraAdvisor.Guide
-<section class="question-help" aria-label="Validate authentication">
-    <h2>Validate authentication</h2>
-    <p>Each export covers all connections. Fill in the settings for each labeled section, then run locally after setup.</p>
-    <div class="actions"><button @onclick="() => Export(ValidationScriptFormat.CurlBash)">Export curl (Bash) ↓</button><button @onclick="() => Export(ValidationScriptFormat.CurlWindows)">Export curl (Windows) ↓</button><button @onclick="() => Export(ValidationScriptFormat.PowerShell)">Export PowerShell ↓</button></div>
+<section class="implementation-exports" aria-label="Implementation exports">
+    <div class="actions">@ChildContent<button @onclick="() => Export(ValidationScriptFormat.CurlBash)">Export curl (Bash) ↓</button><button @onclick="() => Export(ValidationScriptFormat.CurlWindows)">Export curl (Windows) ↓</button><button @onclick="() => Export(ValidationScriptFormat.PowerShell)">Export PowerShell ↓</button></div>
     @if(script is {} output) {
         <div class="export-panel"><h3>@output.FileName</h3><p role="status">@status</p><button @onclick="Copy">Copy script</button><button @onclick="() => script=null">Close script</button><textarea aria-label="Validation script" readonly value="@output.Content"></textarea></div>
     }
 </section>
 @code {
+    [Parameter] public RenderFragment? ChildContent {get;set;}
     [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
     [Inject] public IJSRuntime JS {get;set;}=null!;
     private readonly ValidationScriptExporter exporter=new();
