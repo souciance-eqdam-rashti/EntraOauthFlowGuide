@@ -1,0 +1,22 @@
+@using EntraAdvisor.Guide
+<section class="step-resources" aria-label="Microsoft Learn resources">
+<MudDivider />
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="resource-heading"><MudIcon Icon="@Icons.Material.Outlined.MenuBook" Size="Size.Small" Color="Color.Primary" /><MudText Typo="Typo.subtitle2">Microsoft Learn resources</MudText></MudStack>
+<div class="resource-links">@foreach(var source in Sources) { <MudButton Variant="Variant.Text" Color="Color.Primary" Href="@source.Url.ToString()" Target="_blank" EndIcon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small">@source.Title</MudButton> }</div>
+</section>
+@code {
+ [Parameter, EditorRequired] public GuideStep Step {get;set;}=null!;
+ [Parameter, EditorRequired] public OAuthPlan Plan {get;set;}=null!;
+ private IEnumerable<DocumentationSource> Sources {
+ get {
+ var flows=Plan.Relationships.Where(h=>Plan.Scenario.Relationships.Single(r=>r.Id==h.RelationshipId).CallerComponentId==Step.ComponentId).Select(h=>h.Acquisition)
+ .Concat(Plan.Components.Where(c=>c.ComponentId==Step.ComponentId && c.SignIn!=SignInApproach.None).Select(c=>c.SignIn==SignInApproach.DeviceCode ? TokenAcquisition.DeviceCode : TokenAcquisition.AuthorizationCode));
+ var sources=Step.Sources.AsEnumerable();
+ if(Step.Section!=GuideSection.Prerequisites) {
+ sources=sources.Concat(flows.Distinct().Select(ArchitectureGuideGenerator.FlowSource));
+ if(Plan.ApiValidation.Any(v=>v.ComponentId==Step.ComponentId)) sources=sources.Append(new DocumentationSource("API token validation and authorization",new Uri("https://learn.microsoft.com/en-us/entra/identity-platform/scenario-protected-web-api-app-configuration"),new DateOnly(2026,10,6)));
+ }
+ return sources.DistinctBy(s=>s.Url);
+ }
+ }
+}

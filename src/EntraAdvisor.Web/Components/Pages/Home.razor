@@ -4,7 +4,7 @@
 @inject IDialogService Dialogs
 @using EntraAdvisor.Guide
 <PageTitle>Entra OAuth Advisor</PageTitle>
-<MudAppBar Fixed="false" Elevation="0" Class="advisor-appbar"><MudIcon Icon="@Icons.Material.Outlined.AccountTree" Color="Color.Primary" /><MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="Reset" Class="brand-title">Entra OAuth Advisor</MudButton><MudSpacer /><MudText Typo="Typo.body2" Class="header-caption">Architecture → implementation</MudText><MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="Reset" StartIcon="@Icons.Material.Outlined.RestartAlt">Start over</MudButton></MudAppBar>
+<MudAppBar Fixed="false" Elevation="0" Class="advisor-appbar"><MudIcon Icon="@Icons.Material.Outlined.AccountTree" Color="Color.Primary" /><MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="Reset" Class="brand-title">Entra OAuth Advisor</MudButton></MudAppBar>
 <main class="@(W.Stage == JourneyStage.Implement ? "implement-page" : "")">
 <nav aria-label="Journey"><MudTabs ActivePanelIndex="@((int)W.Stage)" ActivePanelIndexChanged="index => Navigate((JourneyStage)index)" Elevation="0" Rounded="true" Class="journey-tabs"><MudTabPanel Text="Design" Icon="@Icons.Material.Outlined.Tune" /><MudTabPanel Text="Implement" Icon="@Icons.Material.Outlined.Code" Disabled="@(W.Session.Evaluation.Plan is null)" /></MudTabs></nav>
 <div class="workspace choosing-topology"><section class="work-panel">
@@ -30,9 +30,9 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
 
  </section>
  <section class="implementation-step-pane" aria-label="Selected implementation step" id="implementation-step-pane">
- <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId"/> }
+ <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId" ShowLinks="false"/> }
  <CompactStepContent Step="step" Plan="guide.Architecture"/>
- @foreach(var source in step.Sources) { <p><a href="@source.Url" target="_blank" rel="noopener">@source.Title</a></p> }
+ <StepResources Step="step" Plan="guide.Architecture" />
  </article></section>
 
  </div>

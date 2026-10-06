@@ -2,11 +2,12 @@
     <span class="method-label">Authentication methods used:</span>
     @foreach(var flow in Flows) {
         var source=EntraAdvisor.Guide.ArchitectureGuideGenerator.FlowSource(flow);
-        <span class="method-link"><strong>@source.Title</strong> · <a href="@source.Url" target="_blank" rel="noopener">Microsoft Learn ↗</a></span>
+        @if(ShowLinks) { <span class="method-link"><strong>@source.Title</strong> · <a href="@source.Url" target="_blank" rel="noopener">Microsoft Learn ↗</a></span> } else { <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@source.Title</MudChip> }
     }
-    @if(Plan.ApiValidation.Any(v => v.ComponentId == ComponentId)) { <span class="method-link"><strong>API token validation and authorization</strong> · <a href="https://learn.microsoft.com/en-us/entra/identity-platform/scenario-protected-web-api-app-configuration" target="_blank" rel="noopener">Microsoft Learn ↗</a></span> }
+    @if(Plan.ApiValidation.Any(v => v.ComponentId == ComponentId)) { @if(ShowLinks) { <span class="method-link"><strong>API token validation and authorization</strong> · <a href="https://learn.microsoft.com/en-us/entra/identity-platform/scenario-protected-web-api-app-configuration" target="_blank" rel="noopener">Microsoft Learn ↗</a></span> } else { <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">API token validation and authorization</MudChip> } }
 </section>
 @code {
+    [Parameter] public bool ShowLinks {get;set;}=true;
     [Parameter, EditorRequired] public OAuthPlan Plan {get;set;}=null!;
     [Parameter, EditorRequired] public string ComponentId {get;set;}="";
     private IEnumerable<TokenAcquisition> Flows => Plan.Relationships.Where(h=>Plan.Scenario.Relationships.Single(r=>r.Id==h.RelationshipId).CallerComponentId==ComponentId).Select(h=>h.Acquisition).Concat(Plan.Components.Where(c=>c.ComponentId==ComponentId && c.SignIn != SignInApproach.None).Select(c=>c.SignIn == SignInApproach.DeviceCode ? TokenAcquisition.DeviceCode : TokenAcquisition.AuthorizationCode)).Distinct();
