@@ -73,3 +73,9 @@ header.advisor-appbar,body:has(main.implement-page)>header.advisor-appbar{paddin
 @media(max-width:700px){.topology-options{grid-template-columns:1fr}}
 
 .implementation-stepper .mud-step-label{min-height:32px!important;padding:3px 10px!important}.implementation-stepper .mud-step-label-content-title{margin:0!important;line-height:1.3!important}.implementation-stepper .mud-stepper-nav-connector{height:4px;min-height:4px}.implementation-stepper .mud-stepper-nav-connector-line{height:4px;min-height:4px}.implementation-stepper .mud-step.active{background:#e8effd!important}.implementation-summary{padding:12px;margin-top:10px}.stepper-heading{line-height:24px}
+
+/* MudRadioGroup adds an inner wrapper; lay out the cards on that wrapper. */
+.topology-options,.mud-choice-group{display:block}
+.topology-options .mud-radio-group,.mud-choice-group .mud-radio-group{display:grid!important;width:100%;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.topology-option,.question-option{min-width:0;width:100%}
+@media(max-width:540px){.topology-options .mud-radio-group,.mud-choice-group .mud-radio-group{grid-template-columns:1fr}}
