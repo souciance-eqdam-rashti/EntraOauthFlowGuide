@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\EntraAdvisor.ServiceDefaults\EntraAdvisor.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\EntraAdvisor.Engine\EntraAdvisor.Engine.csproj" />
+    <ProjectReference Include="..\EntraAdvisor.Guide\EntraAdvisor.Guide.csproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.0" />
+  </ItemGroup>
+</Project>

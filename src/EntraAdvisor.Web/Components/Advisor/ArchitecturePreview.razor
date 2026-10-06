@@ -1,0 +1,50 @@
+<section class="architecture" aria-label="Application architecture">
+    <div class="panel-title"><span class="eyebrow">YOUR ARCHITECTURE</span><span class="muted">@Scenario.Components.Length components</span></div>
+    <ol class="architecture-nodes">
+        @foreach (var component in OrderedComponents)
+        {
+            <li class="architecture-node @(ActiveComponent == component.Id ? "active-node" : "")">
+                <span class="node-symbol" aria-hidden="true">@(component.Kind.Value == ComponentKind.Api ? "{}" : "▣")</span>
+                <div><strong>@component.Name</strong><span class="muted">@StackLabel(component)</span>
+                    @if (Plan is not null)
+                    {
+                        var decision = Plan.Components.First(c => c.ComponentId == component.Id);
+                        <span class="badge">@(decision.Client == ClientClassification.NotApplicable ? "Validates tokens" : decision.Client + " client")</span>
+                    }
+                    @if (ActiveComponent == component.Id) { <span class="selected-label">Configuring this component</span> }
+                </div>
+            </li>
+        }
+    </ol>
+    @if (!Scenario.Relationships.IsEmpty)
+    {
+        <div class="connection-list">
+            @foreach (var hop in Scenario.Relationships)
+            {
+                var caller = Scenario.Components.First(c => c.Id == hop.CallerComponentId);
+                var target = Scenario.Resources.First(r => r.Id == hop.TargetResourceId);
+                <div class="connection">
+                    <strong>@caller.Name <span aria-hidden="true">→</span> <span class="sr-only">calls</span> @target.Name</strong>
+                    <span class="muted">@(hop.Identity.State == FactState.Known ? (hop.Identity.Value == ActingIdentity.DelegatedUser ? "Acts as the signed-in user" : "Acts as the application") : "Identity to be decided")</span>
+                    @if (Plan is not null)
+                    {
+                        var decision = Plan.Relationships.First(h => h.RelationshipId == hop.Id);
+                        <span class="badge">@FlowLabel(decision.Acquisition)</span>
+                        <span class="audience">Audience: @decision.AudienceValueKey</span>
+                    }
+                </div>
+            }
+        </div>
+    }
+    @if (Plan is null) { <p class="preview-note">Connections show intent. Authentication approaches appear after evaluation.</p> }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public ArchitectureScenario Scenario { get; set; } = null!;
+    [Parameter] public OAuthPlan? Plan { get; set; }
+    [Parameter] public string? ActiveComponent { get; set; }
+    private IEnumerable<ApplicationComponent> OrderedComponents => Scenario.Components.OrderBy(c => c.Kind.Value == ComponentKind.Api ? 1 : 0).ThenBy(c => c.Id, StringComparer.Ordinal);
+    public static string FlowLabel(TokenAcquisition flow) => flow switch { TokenAcquisition.AuthorizationCode => "Authorization code + PKCE", TokenAcquisition.OnBehalfOf => "On-behalf-of (OBO)", TokenAcquisition.ClientCredentials => "App-only access", TokenAcquisition.DeviceCode => "Device code", _ => "Interactive public client" };
+    public static string StackLabel(ApplicationComponent component) => component.Stack.State != FactState.Known ? "Stack to be decided" : component.Stack.Value switch
+    { ImplementationStack.BlazorServer => "Server Blazor", ImplementationStack.BlazorWebAssembly => "Browser Blazor", ImplementationStack.AspNetCoreApi => "ASP.NET Core API", ImplementationStack.JavaScriptTypeScript => "JavaScript / TypeScript", ImplementationStack.WindowsWpf => "Windows desktop", ImplementationStack.DotNetWorker => ".NET worker", _ => ".NET console" };
+}

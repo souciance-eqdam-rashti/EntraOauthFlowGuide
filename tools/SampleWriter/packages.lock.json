@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "entraadvisor.engine": {
+        "type": "Project"
+      },
+      "entraadvisor.guide": {
+        "type": "Project",
+        "dependencies": {
+          "EntraAdvisor.Engine": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

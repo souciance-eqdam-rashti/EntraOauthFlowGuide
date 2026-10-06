@@ -1,0 +1,43 @@
+<section class="auth-flow" aria-label="Authentication flow">
+    <h2>How authentication works</h2>
+    <div class="entity-grid">
+        <article class="entity entra"><span class="badge">Identity provider</span><h3>Microsoft Entra</h3><p>Signs in users and issues tokens for the requested resource.</p><strong>Configure here</strong><p>App registrations, permissions, consent and public certificates where required.</p></article>
+        @foreach (var component in Plan.Scenario.Components)
+        {
+            <article class="entity"><span class="badge">@ArchitecturePreview.StackLabel(component)</span><h3>@component.Name</h3><strong>Configure here</strong><p>@Responsibility(component.Id)</p>@if(ShowTechnical) { <ImplementationFlows Plan="Plan" ComponentId="@component.Id"/> }</article>
+        }
+        @foreach (var resource in Plan.Scenario.Resources.Where(r => r.ApiComponentId is null))
+        {
+            <article class="entity"><span class="badge">Resource</span><h3>@resource.Name</h3><p>Accepts a token issued for this resource and checks the caller's permissions.</p><strong>Configure here</strong><p>Resource access permissions or roles for the chosen identity.</p></article>
+        }
+    </div>
+    <ol class="flow-sequences">
+    @foreach (var hop in Plan.Relationships.OrderBy(h => h.Acquisition == TokenAcquisition.OnBehalfOf ? 1 : 0))
+    {
+        var relationship = Plan.Scenario.Relationships.Single(r => r.Id == hop.RelationshipId);
+        var caller = Plan.Scenario.Components.Single(c => c.Id == relationship.CallerComponentId).Name;
+        var resource = Plan.Scenario.Resources.Single(r => r.Id == relationship.TargetResourceId);
+        var target = resource.ApiComponentId is {} api ? Plan.Scenario.Components.Single(c => c.Id == api).Name : resource.Name;
+        <li><div class="flow-line"><strong>@caller</strong><span class="flow-arrow" aria-label="requests a token from">→</span><strong>Microsoft Entra</strong></div><p>@Request(hop.Acquisition)</p><div class="flow-line"><strong>Microsoft Entra</strong><span class="flow-arrow" aria-label="returns a token to">→</span><strong>@caller</strong></div><p>Returns an access token intended for @target.</p><div class="flow-line"><strong>@caller</strong><span class="flow-arrow" aria-label="calls">→</span><strong>@target</strong></div><p>Calls the resource with that token. The resource validates it and checks @(hop.Identity == ActingIdentity.DelegatedUser ? "the user's delegated permissions" : "the application's permissions or roles").</p>@if(ShowTechnical) { var source=EntraAdvisor.Guide.ArchitectureGuideGenerator.FlowSource(hop.Acquisition); <a class="badge" href="@source.Url" target="_blank" rel="noopener">@ArchitecturePreview.FlowLabel(hop.Acquisition) · Microsoft Learn ↗</a> }</li>
+    }
+    @if (Plan.Relationships.Length == 0) { <li><div class="flow-line">Application <span class="flow-arrow">→</span> Microsoft Entra <span class="flow-arrow">→</span> Application</div><p>@(Plan.Components.Any(c => c.SignIn != SignInApproach.None) ? "The user signs in through Entra. The application validates the sign-in response and creates a session." : "The API validates incoming access tokens and checks permissions before allowing access.")</p></li> }
+    </ol>
+    @if(ShowTechnical && Plan.Prerequisites.Length > 0) {
+        <details><summary>Tenant and resource requirements</summary>@foreach(var prerequisite in Plan.Prerequisites) { <p>@prerequisite.Explanation @prerequisite.NextAction</p> }</details>
+    }
+</section>
+@code {
+    [Parameter, EditorRequired] public OAuthPlan Plan { get; set; } = null!;
+    private string Responsibility(string id) => Plan.ApiValidation.Any(v => v.ComponentId == id)
+        ? "Validate incoming tokens and enforce permissions. Request a separate token for each downstream resource, when needed."
+        : "Configure the tenant and application ID, sign-in when needed, and token acquisition for the resource being called.";
+    [Parameter] public bool ShowTechnical { get; set; }
+    private string Request(TokenAcquisition acquisition) => acquisition switch {
+        TokenAcquisition.OnBehalfOf => "Uses the incoming user token and its server credential to request a downstream token on behalf of the user.",
+        TokenAcquisition.ClientCredentials => "Authenticates as the application to request access without a signed-in user.",
+        TokenAcquisition.DeviceCode => "Shows a sign-in code. The user completes sign-in in a browser before the application receives a token.",
+        _ => ShowTechnical ? "The user signs in through Entra. The application exchanges the authorization code for tokens using PKCE." : "The user signs in through Entra so the application can request access for that user."
+    };
+}
+
+

@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EntraAdvisor.AppHost/EntraAdvisor.AppHost.csproj" />
+    <Project Path="src/EntraAdvisor.ServiceDefaults/EntraAdvisor.ServiceDefaults.csproj" />
+    <Project Path="src/EntraAdvisor.Web/EntraAdvisor.Web.csproj" />
+    <Project Path="src/EntraAdvisor.Engine/EntraAdvisor.Engine.csproj" />
+    <Project Path="src/EntraAdvisor.Guide/EntraAdvisor.Guide.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EntraAdvisor.Tests/EntraAdvisor.Tests.csproj" />
+  </Folder>
+</Solution>

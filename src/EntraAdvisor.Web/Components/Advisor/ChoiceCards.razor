@@ -1,0 +1,67 @@
+<fieldset class="question" aria-describedby="@(Question.Id + "-help")">
+    <legend>@Question.Prompt</legend>
+    <p class="question-explanation">@Explanation</p>
+    <div class="choices">
+        @foreach (var option in Question.Options)
+        {
+            var optionId = Question.Id + "-" + option.Id;
+            <label class="choice @(Selected == option.Id ? "selected" : "")" for="@optionId">
+                <input id="@optionId" type="radio" name="@Question.Id" value="@option.Id" checked="@(Selected == option.Id)"
+                       aria-describedby="@(optionId + "-description")" @onchange="() => SelectedChanged.InvokeAsync(option.Id)" />
+                <span class="choice-body">
+                    <span class="choice-title"><span aria-hidden="true" class="choice-icon">@(option.RepresentsUnknown ? "?" : "◇")</span> @option.Title</span>
+                    <span class="choice-description" id="@(optionId + "-description")">@option.Description</span>
+                    @if (Selected == option.Id) { <span class="selected-label">✓ Selected</span> }
+                </span>
+            </label>
+        }
+    </div>
+    <section class="question-help" id="@(Question.Id + "-help")" aria-labelledby="@(Question.Id + "-help-title")">
+        <h2 id="@(Question.Id + "-help-title")">Help with this question</h2>
+        <p>@Help</p>
+    </section>
+</fieldset>
+
+@code {
+    private string Help => Question.SuppliesFact.FactName switch {
+        "Kind" => "Choose the type of component you are configuring. A browser or installed app is controlled by its users, while a server app or API runs in a managed environment. This helps determine which authentication methods it can use safely.",
+        "Stack" => "Choose the framework used by this component. For example, Blazor Server and Blazor WebAssembly handle sign-in in different places. The answer selects the appropriate configuration and code instructions.",
+        "Execution" => "Execution means where this component's code actually runs. Browser code is accessible to the user; server code runs on infrastructure you manage. This determines where tokens can be stored and whether credentials can be protected.",
+        "UserSignIn" => "Choose Yes if this component starts an interactive sign-in for a person. An API can receive a user's token without signing the user in itself. The answer determines whether the component needs sign-in configuration.",
+        "CanProtectCredentials" => "A server credential is proof of the application's identity, such as a certificate with a private key. Choose Yes only if the application can keep it away from its users and unauthorized callers. This determines whether a credential-based authentication method is suitable.",
+        "LocalBrowserAvailable" => "This asks whether the application can open a browser on the same device so the user can sign in. This helps choose an interactive sign-in method or a method that uses another device.",
+        "AlternateBrowserAvailable" => "If this application cannot open a browser, the user may be able to sign in from a browser on another device. This determines whether showing a sign-in code is a practical option.",
+        "DeviceCodePermitted" => "Device code sign-in lets an application show a code that the user enters in a browser. Your Entra tenant's policies must allow this method. The answer determines whether it can be recommended for this application.",
+        "Hosting" => "Choose the environment where this application will run. Some Azure hosts can provide an application identity automatically; other environments need a certificate or a supported identity trust. This helps select the application's credential setup.",
+        "ManagedIdentityAvailable" => "A managed identity is an identity provided to an application by a supported Azure host. The application does not manage its own certificate or secret for that identity. This determines whether managed identity is an available option for application access.",
+        "Credential" => "This is how the server proves its own identity to Entra. A certificate uses a protected private key, federation trusts an external workload identity, and managed identity comes from a supported Azure host. The answer determines the registration and hosting setup needed for token requests.",
+        "Category" => "Choose the category of resource this app will call: Microsoft Graph, an Azure resource, or a custom API. Different categories use different permission and access setup. You do not need to choose a specific Azure service here.",
+        "Identity" => "Acting as a user means the call uses delegated access associated with that signed-in person. Acting as the application means access is granted to the app independently of a user. This determines the token flow and whether to configure delegated permissions or application permissions and roles.",
+        "IncomingIdentity" => "This describes the access tokens your API accepts from its callers. A token can represent a signed-in user or an application acting on its own. The API must check the corresponding permissions; choosing Both requires handling both kinds of access.",
+        "IncomingRelationshipId" => "When an API calls another resource on behalf of a user, it needs the user token received from its caller. Select the incoming call that provides that token. This connects the calls so the downstream flow preserves the intended user context.",
+        "Model" => "A Single Entra tenant app is intended for accounts in one tenant, including invited guests where enabled. A Multi-tenant app can be used by accounts from other Entra tenants after the required onboarding and consent. This determines the app registration's supported accounts and tenant validation.",
+        "IncludesGuestUsers" => "A guest user is someone invited into your Entra tenant, often from another organization, who accesses the app through that tenant. Guest access can be needed even for a Single Entra tenant app; it does not by itself make the app multi-tenant. This answer helps the guide account for the tenant context, consent and access checks needed for guests.",
+        "TenantBoundary" => "This asks whether the calling application and target resource belong to the same Entra tenant. If they belong to different tenants, access must be granted in the resource's tenant and the flow must support that arrangement. This determines which cross-tenant checks and setup instructions are needed.",
+        _ => "Choose the arrangement that matches your application. This determines which components need sign-in, token acquisition or token validation configuration."
+    };
+    private string Explanation => Question.SuppliesFact.FactName switch {
+        "Kind" => "For example, a browser app runs on the user's device, while an API runs on a server. This determines which sign-in methods are suitable.",
+        "Stack" or "Execution" => "For example, Blazor Server runs on a server and Blazor WebAssembly runs in the browser. The execution location determines how tokens and credentials are handled.",
+        "UserSignIn" => "For example, a user signs in to a web app, while a background app can run on its own. This determines whether user sign-in is needed.",
+        "CanProtectCredentials" => "For example, a server can protect a private key, but a browser app cannot. This determines whether the app can authenticate with a server credential.",
+        "LocalBrowserAvailable" or "AlternateBrowserAvailable" or "DeviceCodePermitted" => "For example, a command-line app can open a browser or show a code to enter on another device. This determines how the user completes sign-in.",
+        "Hosting" or "ManagedIdentityAvailable" => "For example, a supported Azure host can provide a managed identity. The hosting environment determines which credential options are available.",
+        "Credential" => "For example, a server app can use a protected certificate, or a supported host can provide an identity. This determines how the app proves its own identity to Entra.",
+        "Category" => "For example, the app can call Microsoft Graph, an Azure resource, or your own API. Choose the category; specific permissions are configured later.",
+        "Identity" or "IncomingIdentity" => "For example, an API call can act for a signed-in user or for the app itself. This determines which permissions the resource must check.",
+        "IncomingRelationshipId" => "For example, API 1 receives a user token from a web app before calling API 2. Choose which incoming call supplies that user identity.",
+        "Model" => "For example, only your organization can sign in, or other organizations can also use the app. This determines the registration's supported accounts and consent setup.",
+        "IncludesGuestUsers" => "For example, an invited user from another organization signs in as a guest in your tenant. This affects the tenant context used for access.",
+        "TenantBoundary" => "For example, the app and API can belong to one organization or to different organizations. Access across tenants needs additional consent and compatibility checks.",
+        _ => "Choose the arrangement that matches your app. This helps select the authentication flow and where each setup step belongs."
+    };
+    [Parameter, EditorRequired] public QuestionDefinition Question { get; set; } = null!;
+    [Parameter] public string? Selected { get; set; }
+    [Parameter] public EventCallback<string> SelectedChanged { get; set; }
+}
+

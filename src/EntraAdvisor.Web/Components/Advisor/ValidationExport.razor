@@ -1,0 +1,30 @@
+@using EntraAdvisor.Guide
+<section class="question-help" aria-label="Validate authentication">
+    <h2>Validate authentication</h2>
+    <p>Each export covers all connections. Fill in the settings for each labeled section, then run locally after setup.</p>
+    <div class="actions"><button @onclick="() => Export(ValidationScriptFormat.CurlBash)">Export curl (Bash) ↓</button><button @onclick="() => Export(ValidationScriptFormat.CurlWindows)">Export curl (Windows) ↓</button><button @onclick="() => Export(ValidationScriptFormat.PowerShell)">Export PowerShell ↓</button></div>
+    @if(script is {} output) {
+        <div class="export-panel"><h3>@output.FileName</h3><p role="status">@status</p><button @onclick="Copy">Copy script</button><button @onclick="() => script=null">Close script</button><textarea aria-label="Validation script" readonly value="@output.Content"></textarea></div>
+    }
+</section>
+@code {
+    [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
+    [Inject] public IJSRuntime JS {get;set;}=null!;
+    private readonly ValidationScriptExporter exporter=new();
+    private string? priorPlan;
+    private ValidationScript? script;
+    private string status="";
+    protected override void OnParametersSet() {
+        if(priorPlan==Plan.Id) return;
+        priorPlan=Plan.Id;script=null;
+    }
+    private async Task Export(ValidationScriptFormat format) {
+        script=exporter.ExportAll(Plan,format);
+        status="Download requested. If saving is blocked, copy the full script below.";
+        try {await JS.InvokeVoidAsync("advisor.download",script.FileName,script.Content);} catch(JSException) {status="Download unavailable. Copy the full script below and save it locally.";}
+    }
+    private async Task Copy() {
+        if(script is null) return;
+        try {await JS.InvokeVoidAsync("advisor.copy",script.Content);status="Script copied.";} catch(JSException) {status="Clipboard unavailable. Select and copy the displayed script.";}
+    }
+}

@@ -1,0 +1,78 @@
+@page "/"
+@inject AdvisorWorkspace W
+@inject IJSRuntime JS
+@inject IConfiguration Configuration
+@using EntraAdvisor.Guide
+<PageTitle>Entra OAuth Advisor</PageTitle>
+<header><a href="/">◈ Entra OAuth Advisor</a><span>Architecture → implementation</span><button @onclick="Reset">Start over</button></header>
+<main>
+<nav aria-label="Journey">@foreach(var stage in Enum.GetValues<JourneyStage>()) { <button aria-current="@(W.Stage == stage ? "step" : null)" disabled="@(stage != JourneyStage.Design && W.Session.Evaluation.Plan is null)" @onclick="() => Navigate(stage)">@((int)stage+1). @stage</button> }</nav>
+<div class="workspace choosing-topology"><section class="work-panel">
+<p class="eyebrow">@W.Stage · Enterprise Entra identities</p><h1 tabindex="-1" @ref="heading">@Title</h1><p role="status" class="feedback">@message</p>
+@if(W.Stage == JourneyStage.Design) {
+ if(!W.Started) {
+ <p>Select a card to continue to the design questions. Your recommendation appears once those questions are answered.</p><fieldset><legend>What are you building?</legend><div class="choices">@foreach(var p in TopologyPresets.All) { <label class="choice topology-choice" @onclick="() => SelectPreset(p.Id)"><input type="radio" name="topology"/><span class="choice-body"><strong>@p.Title</strong><span>@p.Description</span><span class="use-case">Example: @p.Example</span><span class="card-action">Select and continue →</span></span></label> }</div></fieldset>
+ } else if(screen is not null) {
+ <p>@screen.Section</p>@foreach(var q in screen.Questions) { <p class="question-context">@Context(q.SuppliesFact.EntityId)</p><ChoiceCards @key="q.Id" Question="q" Selected="@Selected(q.Id)" SelectedChanged="value => drafts[q.Id] = value"/> }
+ <div class="actions"><button @onclick="Back">← Back</button><button class="primary" disabled="@screen.Questions.Any(q => Selected(q.Id) is null)" @onclick="Continue">Continue →</button></div>
+ } else if(W.Session.Evaluation.Plan is not null) { <button class="primary" @onclick="() => Navigate(JourneyStage.Recommendation)">View recommendation →</button> }
+ @foreach(var issue in W.Session.Evaluation.Issues.Where(_ => W.Session.Evaluation.Status != EvaluationStatus.NeedsClarification)) { <div class="notice"><strong>@issue.Explanation</strong><p>@issue.NextAction</p></div> }
+}
+else if(W.Stage == JourneyStage.Recommendation && W.Session.Evaluation.Plan is {} plan) {
+ <p>Follow how each app gets a token and how the resource checks access.</p>
+ <button class="primary" @onclick="Generate">Start implementation →</button>
+ <AuthenticationFlow Plan="plan"/>
+ @if(Configuration.GetValue<bool>("Features:AdvancedDetails")) { <details><summary>Edit answers</summary>@foreach(var q in QuestionCatalog.ForScenario(W.Session.Scenario).Where(q => W.Session.Answers.ContainsKey(q.Id) && QuestionCatalog.IsRelevant(q,W.Session.Scenario))) { <div class="answer-row"><span>@q.Prompt <strong>@q.Options.Single(o => o.Id == W.Session.Answers[q.Id].SelectedOptionIds[0]).Title</strong></span><button @onclick="() => Edit(q)">Edit</button></div> }</details>
+ <details><summary>Why these decisions?</summary>@foreach(var t in plan.Trace) { <p><code>@t.RuleId</code> @t.Rationale</p> }</details> }
+}
+else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} guide) {
+ var step = guide.Steps[W.ActiveStep];
+ <details><summary>Authentication flow and setup responsibilities</summary><AuthenticationFlow Plan="guide.Architecture" ShowTechnical="true"/></details>
+ <div class="actions"><button @onclick="Export">Export Markdown ↓</button></div>
+ @if(exportMarkdown is not null) { <section class="export-panel" aria-label="Markdown export"><h2>Markdown export</h2><p>The download was requested. If your browser blocks saving, copy or select the complete Markdown below and save it as entra-implementation-guide.md.</p><button @onclick="() => Copy(exportMarkdown)">Copy Markdown</button><button @onclick="() => exportMarkdown = null">Close export</button><textarea aria-label="Complete Markdown guide" readonly value="@exportMarkdown"></textarea></section> }<p class="notice">Export your guide before leaving this browser session.</p>
+ <details open><summary>Implementation steps</summary><ol class="step-list">@for(var i=0;i<guide.Steps.Length;i++) { var index=i; <li><button aria-current="@(i == W.ActiveStep ? "step" : null)" @onclick="() => SelectStep(index)">@guide.Steps[i].Title</button></li> }</ol></details>
+ <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2>@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId"/><p>@step.Purpose</p><p><strong>Action:</strong> @step.Action</p> }
+ @foreach(var content in step.Content) { @switch(content) {
+ case InstructionContent instruction: <p>@instruction.Text</p> break;
+ case PortalActionContent portal: <p class="breadcrumbs">@string.Join(" → ",portal.Breadcrumbs)</p><p>@portal.Action</p> break;
+ case CopyableValueContent value: <strong>@value.Value.Label</strong><div class="copy-block"><code>@value.Value.Value</code><button @onclick="() => Copy(value.Value.Value)">Copy</button></div><p>@value.Value.Guidance</p> break;
+ case CodeContent snippet: <div class="code-heading"><strong>@snippet.Artifact.DestinationFile <span class="language-label">@snippet.Artifact.Language</span></strong><button @onclick="() => Copy(snippet.Artifact.Content)">Copy code</button></div><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre> break;
+ case ExplanationContent explanation: <details><summary>@explanation.Title</summary><p>@explanation.Text</p></details> break;
+ } }
+ @if(step.Section != GuideSection.Prerequisites) { <p class="expected"><strong>Expected result:</strong> @step.ExpectedResult</p> }@foreach(var source in step.Sources) { <p><a href="@source.Url" target="_blank" rel="noopener">@source.Title</a></p> }
+ <div class="actions"><button disabled="@(W.ActiveStep == 0)" @onclick="() => SelectStep(W.ActiveStep-1)">← Back</button><button class="primary" disabled="@(W.ActiveStep == guide.Steps.Length-1)" @onclick="() => SelectStep(W.ActiveStep+1)">Next →</button></div></article>
+ <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"/>
+}
+</section></div></main>
+@code {
+ private ElementReference heading;
+ private QuestionScreen? screen;
+ private readonly Stack<QuestionScreen> history = new();
+ private readonly Dictionary<string,string> drafts = new();
+ private string message="";
+ private string? exportMarkdown;
+ private bool focus;
+
+ private string Title => W.Stage switch { JourneyStage.Design => "Design your architecture", JourneyStage.Recommendation => "Your authentication plan", _ => "Build it, one step at a time" };
+ protected override void OnInitialized() => screen=W.Session.NextScreen;
+ protected override async Task OnAfterRenderAsync(bool firstRender) { if(focus) { focus=false; await heading.FocusAsync(); } }
+ private string? Selected(string id) => drafts.GetValueOrDefault(id) ?? (W.Session.Answers.TryGetValue(id,out var a) ? a.SelectedOptionIds[0] : null);
+ private string Context(string id) { var r=W.Session.Scenario.Relationships.FirstOrDefault(r=>r.Id==id); return r is null ? Name(id) : Name(r.CallerComponentId)+" → "+Name(r.TargetResourceId); }
+ private string Name(string id) => W.Session.Scenario.Components.FirstOrDefault(c => c.Id == id)?.Name ?? W.Session.Scenario.Resources.FirstOrDefault(r => r.Id == id)?.Name ?? id;
+ private void SelectPreset(string id) { if(W.Started) return; W.ChoosePreset(id); history.Clear(); drafts.Clear(); Start(); }
+ private void Start() { W.Started=true; screen=W.Session.NextScreen; focus=true; }
+ private void Continue() { if(screen is null) return; var prior=screen; exportMarkdown=null; foreach(var q in prior.Questions) if(Selected(q.Id) is {} value && QuestionCatalog.IsRelevant(q,W.Session.Scenario)) message=DescribeChange(W.Apply(new(q.Id,[value]))); history.Push(prior); drafts.Clear(); screen=W.Session.NextScreen; if(W.Session.Evaluation.Plan is not null) { W.Stage=JourneyStage.Recommendation; message="Your authentication plan is ready. Continue to implementation for the setup steps."; } focus=true; }
+ private string DescribeChange(AnswerChangeImpact impact) => W.Guide is null ? "Answers saved." : impact.Explanation;
+ private void Back() { if(history.TryPop(out var prior)) { screen=prior; drafts.Clear(); } else { W.Started=false; } message=""; focus=true; }
+ private void Edit(QuestionDefinition q) { W.Stage=JourneyStage.Design; screen=new(q.Section,[q]); drafts.Clear(); focus=true; }
+ private void Navigate(JourneyStage stage) { if(stage == JourneyStage.Implement && !W.GuideIsCurrent) { Generate(); return; } W.Stage=stage; screen=W.Session.NextScreen; focus=true; message=""; }
+ private void Generate() { message=""; exportMarkdown=null; W.SetGuide(new ArchitectureGuideGenerator().Generate(W.Session.Evaluation.Plan!,new([]))); focus=true; }
+ private void SelectStep(int i) { W.SelectStep(i); focus=true; }
+ private void Reset() { W.Reset(); exportMarkdown=null; history.Clear(); drafts.Clear(); screen=W.Session.NextScreen; message=""; focus=true; }
+ private async Task Copy(string value) { try { await JS.InvokeVoidAsync("advisor.copy",value); message="Copied to clipboard."; } catch(JSException) { message="Clipboard unavailable. Select and copy the displayed text."; } }
+ private async Task Export() { if(!W.GuideIsCurrent) return; var text=new MarkdownGuideExporter().ExportMarkdown(W.Guide!); exportMarkdown=text; try { await JS.InvokeVoidAsync("advisor.download","entra-implementation-guide.md",text); message="Markdown ready. Download requested; full text is available below."; } catch(JSException) { message="Download unavailable. Copy or save the Markdown displayed below."; } }
+}
+
+
+
+
