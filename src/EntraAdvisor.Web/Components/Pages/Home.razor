@@ -21,19 +21,20 @@
 else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} guide) {
  var step = guide.Steps[W.ActiveStep];
  <div class="implementation-layout">
- <section class="implementation-step-pane" aria-label="Selected implementation step" id="implementation-step-pane">
- <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId"/> }
- <CompactStepContent Step="step" Plan="guide.Architecture"/>
- @foreach(var source in step.Sources) { <p><a href="@source.Url" target="_blank" rel="noopener">@source.Title</a></p> }
- </article></section>
  <section class="implementation-step-selector" aria-label="Implementation steps">
  <MudText Typo="Typo.overline" Class="stepper-heading">IMPLEMENTATION JOURNEY</MudText>
  <MudStepper @key="guide.PlanId" Vertical="true" NonLinear="true" ScrollableNavigation="false" ActiveIndex="W.ActiveStep" ActiveIndexChanged="SelectStep" Class="implementation-stepper">
  <ChildContent>@foreach(var item in guide.Steps) { <MudStep Title="@item.Title" /> }</ChildContent>
  <ActionContent></ActionContent>
  </MudStepper>
- <MudPaper Outlined="true" Elevation="0" Class="implementation-summary"><MudText Typo="Typo.subtitle2">Implementation steps</MudText><MudText Typo="Typo.caption" Color="Color.Secondary">Step @(W.ActiveStep+1) of @guide.Steps.Length · @Name(step.ComponentId)</MudText><MudText Typo="Typo.body2">@step.Title</MudText></MudPaper>
+
  </section>
+ <section class="implementation-step-pane" aria-label="Selected implementation step" id="implementation-step-pane">
+ <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId"/> }
+ <CompactStepContent Step="step" Plan="guide.Architecture"/>
+ @foreach(var source in step.Sources) { <p><a href="@source.Url" target="_blank" rel="noopener">@source.Title</a></p> }
+ </article></section>
+
  </div>
  <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"><MudButton Variant="Variant.Outlined" OnClick="Export" StartIcon="@Icons.Material.Outlined.FileDownload">Export Markdown</MudButton><MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OpenDiagram" StartIcon="@Icons.Material.Outlined.AccountTree">Diagram Overview</MudButton></ValidationExport>
 
@@ -65,7 +66,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  private void Edit(QuestionDefinition q) { W.Stage=JourneyStage.Design; screen=new(q.Section,[q]); drafts.Clear(); focus=true; }
  private void Navigate(JourneyStage stage) { if(stage == JourneyStage.Implement && !W.GuideIsCurrent) { Generate(); return; } W.Stage=stage; screen=W.Session.NextScreen; focus=true; message=""; }
  private void Generate() { message=""; W.SetGuide(new ArchitectureGuideGenerator().Generate(W.Session.Evaluation.Plan!,new([]))); focus=true; }
- private void SelectStep(int i) { W.SelectStep(i); focusStep=true; }
+ private void SelectStep(int i) { if(W.Stage != JourneyStage.Implement || !W.GuideIsCurrent || W.Guide is null || i < 0 || i >= W.Guide.Steps.Length) return; W.SelectStep(i); focusStep=true; }
  private void Reset() { W.Reset(); history.Clear(); drafts.Clear(); screen=W.Session.NextScreen; message=""; focus=true; }
  private async Task OpenDiagram() { if(W.Guide is null) return; await Dialogs.ShowAsync<DiagramOverviewDialog>("Diagram Overview", new DialogParameters { [nameof(DiagramOverviewDialog.Plan)] = W.Guide.Architecture }, new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true }); }
  private async Task CloseDiagram() => await JS.InvokeVoidAsync("advisor.closeDiagram");
