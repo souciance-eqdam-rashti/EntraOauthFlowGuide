@@ -171,3 +171,6 @@ main.implement-page{background:var(--mud-palette-background)!important}
 .app-loading { margin:24px; color:#172b4d; font-family:Segoe UI,Arial,sans-serif; }
 
 .advisor-appbar .core-concepts-button{margin-left:auto;flex-shrink:0}.advisor-appbar .mud-toolbar{flex-wrap:wrap}@media(max-width:420px){.advisor-appbar .mud-toolbar{gap:4px}.advisor-appbar .core-concepts-button{font-size:12px;padding:6px}.advisor-appbar .brand-title{padding:6px!important}}
+
+@media(min-width:1000px){.implementation-exports .actions{flex-wrap:nowrap;gap:6px}.implementation-exports .mud-button{font-size:11px;padding:7px 8px;min-width:0}.implementation-exports .mud-button-start-icon{margin-left:0;margin-right:5px}.implementation-exports .mud-button-start-icon .mud-icon-root{font-size:18px}}
+@media(min-width:1000px) and (max-width:1149px){.implementation-exports .actions{gap:4px}.implementation-exports .mud-button{padding:7px 6px}.implementation-exports .mud-button-start-icon{display:none}}
