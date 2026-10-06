@@ -1,0 +1,24 @@
+@using EntraAdvisor.Guide
+@inject AdvisorWorkspace W
+<details class="execution-group" open="@(!Complete)">
+ <summary><div class="execution-group-header"><span class="group-number">@Number</span>@if(Group.System=="Entra") { <svg class="entra-system-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 2 12l6 6 4-4-3-3 3-3 7 7 3-3z"/><path fill="currentColor" opacity=".65" d="m12 14-4 4 4 4 7-7-4-4z"/></svg> } else { <MudIcon Icon="@Icon" Size="Size.Small" aria-hidden="true"/> }<div class="group-heading"><strong>@Group.Title</strong><span>@SystemLabel · @string.Join(" › ",Group.Location)</span></div>@if(Complete) { <span class="group-complete">Complete</span> }<span class="group-chevron" aria-hidden="true">⌄</span></div></summary>
+ <div class="execution-group-body"><ol class="group-action-rows">
+ @foreach(var action in Group.Actions) { if(action is ExplanationContent explanation) { <li class="group-explanation"><MudExpansionPanels Elevation="0" Class="quiet-disclosures"><MudExpansionPanel Text="Why this setting?"><strong>@explanation.Title</strong><InstructionText Text="@explanation.Text"/></MudExpansionPanel></MudExpansionPanels></li> } else { <li>@switch(action) {
+ case InstructionContent instruction: @if(!string.IsNullOrEmpty(instruction.Title)) { <strong class="group-action-title">@instruction.Title</strong> }<InstructionText Text="@instruction.Text"/> break;
+ case CopyableValueContent value when value.Value.ReferenceOnly: <strong class="group-action-title">@value.Value.Label</strong><InstructionText Text="@value.Value.Guidance"/> break;
+ case CopyableValueContent value: <ConfigurationTable Values="@(new[] { value.Value })" FieldHeading="Application setting" ValueHeading="Value to configure"/> break;
+ case PortalActionContent portal: <InstructionText Text="@portal.Action"/> break;
+ case ConfigurationRowsContent rows: @if(!string.IsNullOrEmpty(rows.Introduction)) { <InstructionText Text="@rows.Introduction"/> }<ConfigurationTable Values="rows.Values"/><div class="portal-final-action"><InstructionText Text="@rows.Instruction"/></div> break;
+ case CodeContent snippet: <strong class="group-action-title">@snippet.Artifact.DestinationFile</strong><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre> break;
+ }</li> } }
+ </ol><MudButton Variant="Variant.Text" Size="Size.Small" OnClick="ToggleComplete">@(Complete ? "Reopen group" : "Done with this group")</MudButton></div>
+</details>
+@code {
+ [Parameter,EditorRequired] public InstructionGroup Group {get;set;}=null!;
+ [Parameter] public int Number {get;set;}
+ [Parameter,EditorRequired] public string GroupKey {get;set;}="";
+ private bool Complete => W.CompletedInstructionGroups.Contains(GroupKey);
+ private void ToggleComplete() { if(Complete) W.CompletedInstructionGroups.Remove(GroupKey);else W.CompletedInstructionGroups.Add(GroupKey); }
+ private string SystemLabel => Group.System switch { "Entra"=>"Microsoft Entra admin center", "Terminal"=>"Local terminal", "Test"=>"Test environment", _=>"Application code" };
+ private string Icon => Group.System switch { "Api"=>Icons.Material.Outlined.Api,"Terminal"=>Icons.Material.Outlined.Terminal,"Test"=>Icons.Material.Outlined.Science,_=>Icons.Material.Outlined.Code };
+}

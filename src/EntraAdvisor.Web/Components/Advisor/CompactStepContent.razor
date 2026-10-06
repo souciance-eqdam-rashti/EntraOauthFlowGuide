@@ -1,48 +1,10 @@
-<div class="implementation-actions">
-@foreach(var group in Groups()) {
- @switch(group[0]) {
-  case CopyableValueContent reference when reference.Value.ReferenceOnly:
-   @foreach(var value in group.Cast<CopyableValueContent>()) { <ImplementationAction Title="@value.Value.Label" Path="@(new[] { "App registrations", ComponentName, "Overview" })"><p>@value.Value.Guidance</p></ImplementationAction> }
-   break;
-  case CopyableValueContent:
-   <ImplementationAction Title="Configure application settings" Path="@(new[] { ComponentName, "Authentication configuration" })" PathLabel="Application configuration"><ConfigurationTable Values="@(group.Cast<CopyableValueContent>().Select(v=>v.Value).ToArray())" FieldHeading="Application setting" ValueHeading="Value to configure"/></ImplementationAction>
-   break;
-  case PortalActionContent portal:
-   <ImplementationAction Title="@portal.Title" Path="@PortalPath(portal.Breadcrumbs)"><p>@portal.Action</p></ImplementationAction>
-   break;
-  case InstructionContent:
-   <ImplementationAction Title="@GroupTitle(group)" Path="@InstructionPath(group[0])" PathLabel="@((group[0] as InstructionContent)!.LocationLabel)">@foreach(var instruction in group.Cast<InstructionContent>()) { <InstructionText Text="@instruction.Text"/> }</ImplementationAction>
-   break;
-  case ConfigurationRowsContent rows:
-   <ImplementationAction Title="@rows.Title" Path="@PortalPath(rows.Breadcrumbs)">@if(!string.IsNullOrEmpty(rows.Introduction)) { <p>@rows.Introduction</p> }<ConfigurationTable Values="rows.Values"/><div class="portal-final-action"><InstructionText Text="@rows.Instruction"/></div></ImplementationAction>
-   break;
-  case CodeContent snippet:
-   <ImplementationAction Title="@(snippet.Artifact.ExecutionLocation is not null ? "Run the commands" : "Apply the code")" Path="@(new[] { snippet.Artifact.ExecutionLocation ?? snippet.Artifact.DestinationFile })" PathLabel="@(snippet.Artifact.ExecutionLocation is null ? ".NET application · file location" : "PowerShell · execution location")"><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre></ImplementationAction>
-   break;
-  case ExplanationContent explanation:
-   <MudExpansionPanels Elevation="0" Class="quiet-disclosures"><MudExpansionPanel Text="Why this setting?"><MudText Typo="Typo.subtitle2">@explanation.Title</MudText><p>@explanation.Text</p></MudExpansionPanel></MudExpansionPanels>
-   break;
- }
-}
-@if(!string.IsNullOrWhiteSpace(Step.ExpectedResult)) { <ExpectedResult Text="@Step.ExpectedResult" Label="@(Step.Section == GuideSection.TestAndTroubleshoot ? "Expected output" : "Expected result")"/> }
+@using EntraAdvisor.Guide
+<div class="implementation-actions execution-groups">
+@{ var groups=InstructionGroups.Create(Step,Plan); }
+@for(var index=0;index<groups.Length;index++) { var key=Plan.Id+":"+Step.Id+":"+index; <InstructionGroupPanel @key="key" Group="groups[index]" Number="@(index+1)" GroupKey="@key"/> }
+@if(!string.IsNullOrWhiteSpace(Step.ExpectedResult)) { <ExpectedResult Text="@Step.ExpectedResult" Label="@(Step.Section==GuideSection.TestAndTroubleshoot ? "Expected output" : "Expected result")"/> }
 </div>
 @code {
  [Parameter,EditorRequired] public GuideStep Step {get;set;}=null!;
  [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
- private IReadOnlyList<string> InstructionPath(GuideContent content) {
-  var instruction=(InstructionContent)content;
-  var index=Step.Content.IndexOf(content);
-  return index>0 && Step.Content[index-1] is InstructionContent previous && previous.Location.SequenceEqual(instruction.Location) ? Array.Empty<string>() : instruction.Location;
- }
- private string ComponentName => Plan.Scenario.Components.First(c=>c.Id==Step.ComponentId).Name;
- private IEnumerable<List<GuideContent>> Groups() {
-  var groups=new List<List<GuideContent>>();
-  foreach(var content in Step.Content) {
-   if(groups.Count>0 && (content is InstructionContent i && string.IsNullOrEmpty(i.Title) && groups[^1][0] is InstructionContent || content is CopyableValueContent v && groups[^1][0] is CopyableValueContent previous && v.Value.ReferenceOnly == previous.Value.ReferenceOnly)) groups[^1].Add(content);
-   else groups.Add(new() { content });
-  }
-  return groups;
- }
- private string GroupTitle(List<GuideContent> group) => group.OfType<InstructionContent>().Select(i=>i.Title).FirstOrDefault(t=>!string.IsNullOrEmpty(t)) ?? (Step.Section switch { GuideSection.Prerequisites => "Prerequisites", GuideSection.TestAndTroubleshoot => "Validate the flow", _ => "Configure the application" });
- private static IReadOnlyList<string> PortalPath(IReadOnlyList<string> path) => path.Count>0 && path[0] == "Entra admin center" ? path.Skip(1).ToArray() : path;
 }

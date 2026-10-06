@@ -24,7 +24,7 @@ public sealed record CodeArtifact(string Id, string ComponentId, string Language
 public sealed record StepCompletion(string StepId, CompletionState State, string? BlockerExplanation = null);
 
 /// <summary>Typed content is shared by the UI and Markdown export.</summary>
-public abstract record GuideContent;
+public abstract record GuideContent { public string GroupTitle { get; init; } = ""; public string GroupSystem { get; init; } = ""; public ImmutableArray<string> GroupLocation { get; init; } = []; }
 public sealed record InstructionContent(string Text) : GuideContent { public string Title { get; init; } = ""; public ImmutableArray<string> Location { get; init; } = []; public string LocationLabel { get; init; } = "Application configuration"; }
 public sealed record PortalActionContent(ImmutableArray<string> Breadcrumbs, string Action) : GuideContent { public string Title { get; init; } = "Configure in Entra"; }
 public sealed record CopyableValueContent(GuideValue Value) : GuideContent;

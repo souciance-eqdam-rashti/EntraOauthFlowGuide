@@ -34,6 +34,17 @@ public sealed class ArchitectureGuideTests
             Assert.All(step.DependsOnStepIds,id=>Assert.Contains(id,seen));
             Assert.True(seen.Add(step.Id));
             Assert.NotEmpty(step.Content);Assert.NotEmpty(step.Sources);
+            var groups=InstructionGroups.Create(step,plan);
+            Assert.Equal(step.Content,groups.SelectMany(g=>g.Actions));
+            Assert.All(groups,g=> { Assert.NotEmpty(g.Location); Assert.NotEmpty(g.Title); });
+            if(step.Content.OfType<CodeContent>().Any(c=>c.Artifact.Id is "browser-auth" or "blazor-browser-auth")) {
+                Assert.Equal(3,groups.Length);
+                Assert.Equal(new[] { "Entra","Code","Api" },groups.Select(g=>g.System));
+                Assert.DoesNotContain(groups[0].Actions,c=>c is CodeContent);
+                Assert.Contains(groups[1].Actions,c=>c is CodeContent code && (code.Artifact.DestinationFile=="redirect.html" || code.Artifact.DestinationFile=="wwwroot/appsettings.json"));
+                Assert.Contains(groups[2].Actions,c=>c is CodeContent code && (code.Artifact.Content.Contains("result.accessToken") || code.Artifact.Content.Contains("AuthorizationMessageHandler")));
+                Assert.Contains("using an access token issued for that API",step.ExpectedResult);
+            }
         }
         var markdown=new MarkdownGuideExporter().ExportMarkdown(guide);
         Assert.All(guide.Steps,step=>Assert.Contains(step.Title,markdown));

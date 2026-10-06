@@ -13,6 +13,7 @@ public sealed class AdvisorWorkspace
 {
     public QuestionnaireSession Session { get; private set; } = QuestionnaireSession.Create(TopologyPresets.Create("api-chain"));
     public JourneyStage Stage { get; set; } = JourneyStage.Design;
+    public HashSet<string> CompletedInstructionGroups { get; } = [];
     public bool Started { get; set; }
     public string PresetId { get; private set; } = "api-chain";
     public ImplementationGuide? Guide { get; private set; }
@@ -23,14 +24,17 @@ public sealed class AdvisorWorkspace
     public AnswerChangeImpact Apply(QuestionAnswer answer)
     {
         var change = Session.Apply(answer);
-        if (Guide is not null && change.Impact.ChangedFact is not null)
+        if (Guide is not null && change.Impact.ChangedFact is not null) {
+            CompletedInstructionGroups.Clear();
             Completion = GuideCompletionInvalidator.Apply(Guide, Completion, change.Impact, change.Impact.ChangedFact.EntityId).Completion;
+        }
         Session = change.Session;
         return change.Impact;
     }
 
     public void ChoosePreset(string id)
     {
+        CompletedInstructionGroups.Clear();
         Session = QuestionnaireSession.Create(TopologyPresets.Create(id));
         PresetId = id;
         Guide = null;
@@ -64,6 +68,7 @@ public sealed class AdvisorWorkspace
         {
             var impact = new AnswerChangeImpact([], [], [Completion[ActiveStep].StepId], "A completed prerequisite was reopened.");
             Completion = GuideCompletionInvalidator.Apply(Guide, Completion, impact, "completion").Completion;
+            CompletedInstructionGroups.Clear();
         }
         Completion = Completion.SetItem(ActiveStep, new(Completion[ActiveStep].StepId, state, state == CompletionState.Blocked ? "Waiting for a prerequisite or configuration change." : null));
     }
