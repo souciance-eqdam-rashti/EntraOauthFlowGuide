@@ -1,0 +1,25 @@
+@using EntraAdvisor.Guide.Provisioning
+<MudDialog>
+ <DialogContent>
+  <MudText Typo="Typo.body1">Create and configure the registrations for this architecture from typed deployment data.</MudText>
+  <MudText Typo="Typo.body2" Class="mt-3">Registrations: @setup.Applications.Count(a => a.CreateRegistration) · Custom permissions: @setup.Permissions.Length · Access relationships: @setup.Access.Length</MudText>
+  <ul class="provisioning-notes">@foreach(var note in setup.ManualActions){<li>@note</li>}</ul>
+  <MudText Typo="Typo.body2">The ZIP includes a parameter file, scripts and a README. Fill the placeholders, review the files and run them in your own tenant. Downloading runs nothing in Entra.</MudText>
+  @if(status.Length > 0){<p role="status">@status</p>}
+ </DialogContent>
+ <DialogActions>
+  <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Download" StartIcon="@Icons.Material.Outlined.FileDownload">Download @(Format == ProvisioningFormat.Bicep ? "Bicep" : "setup PowerShell") ZIP</MudButton>
+ </DialogActions>
+</MudDialog>
+@code {
+ [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
+ [Parameter] public ProvisioningFormat Format {get;set;}
+ [Inject] public IJSRuntime JS {get;set;}=null!;
+ private ProvisioningPlan setup=null!;
+ private string status="";
+ protected override void OnParametersSet()=>setup=new ProvisioningPlanBuilder().Build(Plan);
+ private async Task Download(){
+  try {var bundle=new ProvisioningExporter().Export(Plan,Format);await JS.InvokeVoidAsync("advisor.downloadBytes",bundle.FileName,bundle.ToZip());status="Download started.";}
+  catch(JSException){status="Download could not start. Please try again.";}
+ }
+}
