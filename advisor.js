@@ -12,5 +12,6 @@ window.advisor = {
    if(!navigator.clipboard) throw new Error('Clipboard unavailable');
    await Promise.race([navigator.clipboard.writeText(text),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Clipboard unavailable')),2000))]);
  },
+ downloadBytes: (name, bytes) => { const url=URL.createObjectURL(new Blob([bytes],{type:'application/zip'})); const a=document.createElement('a'); a.href=url; a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),10000); },
  download: (name, text) => { const url=URL.createObjectURL(new Blob([text],{type:'text/markdown;charset=utf-8'})); const a=document.createElement('a'); a.href=url; a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),10000); }
 };

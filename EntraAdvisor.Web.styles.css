@@ -1,3 +1,16 @@
+/* /Components/Advisor/CoreConceptsDialog.razor.rz.scp.css */
+ .concepts-intro[b-ov3pd2ihco]{margin:0 0 16px;color:var(--mud-palette-text-secondary);font-size:14px;line-height:1.6}
+.concept-section[b-ov3pd2ihco]{border-bottom:1px solid var(--mud-palette-divider);padding:0}
+.concept-section summary[b-ov3pd2ihco]{cursor:pointer;padding:16px 4px;font-size:16px;font-weight:600;color:var(--mud-palette-text-primary)}
+.concept-section summary:focus-visible[b-ov3pd2ihco]{outline:2px solid var(--mud-palette-primary);outline-offset:2px;border-radius:4px}
+.concept-section-content[b-ov3pd2ihco]{padding:0 4px 20px}
+.concept-entry+.concept-entry[b-ov3pd2ihco]{margin-top:24px}
+.concept-entry h3[b-ov3pd2ihco]{font-size:16px;font-weight:600;margin:0 0 6px;color:var(--mud-palette-text-primary)}
+.concept-entry p[b-ov3pd2ihco]{font-size:15px;line-height:1.6;margin:0 0 8px;overflow-wrap:anywhere;color:var(--mud-palette-text-primary)}
+.concept-entry .concept-example[b-ov3pd2ihco]{border-left:2px solid var(--mud-palette-divider);padding-left:12px;font-size:14px}
+/* /Components/Advisor/ProvisioningExportDialog.razor.rz.scp.css */
+.provisioning-notes[b-qj8rc45nxz]{padding-left:24px;font-size:14px;line-height:1.6;margin:16px 0;color:var(--mud-palette-text-primary)}
+.provisioning-notes li+li[b-qj8rc45nxz]{margin-top:8px}
 /* /Components/Layout/MainLayout.razor.rz.scp.css */
 #blazor-error-ui[b-330f50qrrv] {
     color-scheme: light only;
