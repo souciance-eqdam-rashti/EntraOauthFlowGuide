@@ -28,7 +28,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  <section class="implementation-step-selector" aria-label="Implementation steps"><h2>Implementation steps</h2><ol class="step-list">@for(var i=0;i<guide.Steps.Length;i++) { var index=i; <li><button aria-current="@(i == W.ActiveStep ? "step" : null)" @onclick="() => SelectStep(index)">@guide.Steps[i].Title</button></li> }</ol></section>
  </div>
  <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"><button @onclick="Export">Export Markdown ↓</button><button @onclick="OpenDiagram">Diagram Overview</button></ValidationExport>
- @if(exportMarkdown is not null) { <section class="export-panel" aria-label="Markdown export"><h2>Markdown export</h2><button @onclick="() => exportMarkdown = null">Close export</button><textarea aria-label="Complete Markdown guide" readonly value="@exportMarkdown"></textarea></section> }
+
  <dialog id="diagram-overview" class="diagram-dialog" aria-labelledby="diagram-title"><div class="diagram-dialog-header"><h2 id="diagram-title">Diagram Overview</h2><button autofocus @onclick="CloseDiagram" aria-label="Close diagram overview">Close ✕</button></div><AuthenticationFlow Plan="guide.Architecture" ShowTechnical="true"/></dialog>
 
 }
@@ -41,7 +41,6 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  private readonly Stack<QuestionScreen> history = new();
  private readonly Dictionary<string,string> drafts = new();
  private string message="";
- private string? exportMarkdown;
  private bool focus;
 
  private string Title => W.Stage switch { JourneyStage.Design => "Design your architecture", _ => "Build it, one step at a time" };
@@ -52,16 +51,16 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  private string Name(string id) => W.Session.Scenario.Components.FirstOrDefault(c => c.Id == id)?.Name ?? W.Session.Scenario.Resources.FirstOrDefault(r => r.Id == id)?.Name ?? id;
  private void SelectPreset(string id) { if(W.Started) return; W.ChoosePreset(id); history.Clear(); drafts.Clear(); Start(); }
  private void Start() { W.Started=true; screen=W.Session.NextScreen; focus=true; }
- private void Continue() { if(screen is null) return; var prior=screen; exportMarkdown=null; foreach(var q in prior.Questions) if(Selected(q.Id) is {} value && QuestionCatalog.IsRelevant(q,W.Session.Scenario)) message=DescribeChange(W.Apply(new(q.Id,[value]))); history.Push(prior); drafts.Clear(); screen=W.Session.NextScreen; if(W.Session.Evaluation.Plan is not null) { Generate(); } focus=true; }
+ private void Continue() { if(screen is null) return; var prior=screen; foreach(var q in prior.Questions) if(Selected(q.Id) is {} value && QuestionCatalog.IsRelevant(q,W.Session.Scenario)) message=DescribeChange(W.Apply(new(q.Id,[value]))); history.Push(prior); drafts.Clear(); screen=W.Session.NextScreen; if(W.Session.Evaluation.Plan is not null) { Generate(); } focus=true; }
  private string DescribeChange(AnswerChangeImpact impact) => W.Guide is null ? "Answers saved." : impact.Explanation;
  private void Back() { if(history.TryPop(out var prior)) { screen=prior; drafts.Clear(); } else { W.Started=false; } message=""; focus=true; }
  private void Edit(QuestionDefinition q) { W.Stage=JourneyStage.Design; screen=new(q.Section,[q]); drafts.Clear(); focus=true; }
  private void Navigate(JourneyStage stage) { if(stage == JourneyStage.Implement && !W.GuideIsCurrent) { Generate(); return; } W.Stage=stage; screen=W.Session.NextScreen; focus=true; message=""; }
- private void Generate() { message=""; exportMarkdown=null; W.SetGuide(new ArchitectureGuideGenerator().Generate(W.Session.Evaluation.Plan!,new([]))); focus=true; }
+ private void Generate() { message=""; W.SetGuide(new ArchitectureGuideGenerator().Generate(W.Session.Evaluation.Plan!,new([]))); focus=true; }
  private void SelectStep(int i) { W.SelectStep(i); focusStep=true; }
- private void Reset() { W.Reset(); exportMarkdown=null; history.Clear(); drafts.Clear(); screen=W.Session.NextScreen; message=""; focus=true; }
+ private void Reset() { W.Reset(); history.Clear(); drafts.Clear(); screen=W.Session.NextScreen; message=""; focus=true; }
  private async Task OpenDiagram() => await JS.InvokeVoidAsync("advisor.openDiagram");
  private async Task CloseDiagram() => await JS.InvokeVoidAsync("advisor.closeDiagram");
  private async Task Copy(string value) { try { await JS.InvokeVoidAsync("advisor.copy",value); message="Copied to clipboard."; } catch(JSException) { message="Clipboard unavailable. Select and copy the displayed text."; } }
- private async Task Export() { if(!W.GuideIsCurrent) return; var text=new MarkdownGuideExporter().ExportMarkdown(W.Guide!); exportMarkdown=text; try { await JS.InvokeVoidAsync("advisor.download","entra-implementation-guide.md",text); message="Markdown ready. Download requested; full text is available below."; } catch(JSException) { message="Download unavailable. Copy or save the Markdown displayed below."; } }
+ private async Task Export() { if(!W.GuideIsCurrent) return; var text=new MarkdownGuideExporter().ExportMarkdown(W.Guide!);  try { await JS.InvokeVoidAsync("advisor.download","entra-implementation-guide.md",text); message=""; } catch(JSException) { message="Download could not start. Please try again."; } }
 }

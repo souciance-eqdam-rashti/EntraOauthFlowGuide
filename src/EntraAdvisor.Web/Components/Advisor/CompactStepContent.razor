@@ -1,5 +1,7 @@
 @using EntraAdvisor.Guide.Contracts
+<ol class="step-instructions">
 @foreach(var content in Step.Content) {
+    <li>
     @switch(content) {
         case CopyableValueContent value:
             <div class="value-guidance"><strong>@value.Value.Label</strong><p>@value.Value.Guidance</p></div>
@@ -17,7 +19,9 @@
             <details class="step-detail"><summary>@explanation.Title</summary><p>@explanation.Text</p></details>
             break;
     }
+    </li>
 }
+</ol>
 @code {
     [Parameter,EditorRequired] public GuideStep Step {get;set;}=null!;
     [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;

@@ -1,29 +1,17 @@
 @using EntraAdvisor.Guide
 <section class="implementation-exports" aria-label="Implementation exports">
     <div class="actions">@ChildContent<button @onclick="() => Export(ValidationScriptFormat.CurlBash)">Export curl (Bash) ↓</button><button @onclick="() => Export(ValidationScriptFormat.CurlWindows)">Export curl (Windows) ↓</button><button @onclick="() => Export(ValidationScriptFormat.PowerShell)">Export PowerShell ↓</button></div>
-    @if(script is {} output) {
-        <div class="export-panel"><h3>@output.FileName</h3><p role="status">@status</p><button @onclick="() => script=null">Close script</button><textarea aria-label="Validation script" readonly value="@output.Content"></textarea></div>
-    }
+    @if(status.Length > 0) { <p role="status">@status</p> }
 </section>
 @code {
     [Parameter] public RenderFragment? ChildContent {get;set;}
     [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
     [Inject] public IJSRuntime JS {get;set;}=null!;
     private readonly ValidationScriptExporter exporter=new();
-    private string? priorPlan;
-    private ValidationScript? script;
     private string status="";
-    protected override void OnParametersSet() {
-        if(priorPlan==Plan.Id) return;
-        priorPlan=Plan.Id;script=null;
-    }
     private async Task Export(ValidationScriptFormat format) {
-        script=exporter.ExportAll(Plan,format);
-        status="Download requested. If saving is blocked, copy the full script below.";
-        try {await JS.InvokeVoidAsync("advisor.download",script.FileName,script.Content);} catch(JSException) {status="Download unavailable. Copy the full script below and save it locally.";}
-    }
-    private async Task Copy() {
-        if(script is null) return;
-        try {await JS.InvokeVoidAsync("advisor.copy",script.Content);status="Script copied.";} catch(JSException) {status="Clipboard unavailable. Select and copy the displayed script.";}
+        var script=exporter.ExportAll(Plan,format);
+        status="";
+        try {await JS.InvokeVoidAsync("advisor.download",script.FileName,script.Content);} catch(JSException) {status="Download could not start. Please try again.";}
     }
 }

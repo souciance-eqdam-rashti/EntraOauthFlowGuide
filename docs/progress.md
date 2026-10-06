@@ -273,3 +273,11 @@ Completed in the main folder: removed sentence truncation and duplicate full-tex
 Validation: all 104 tests passed, including three new semantic checks for user-only, application-only and mixed API access guidance. Browser walkthrough of the cited browser-to-backend scenario confirmed a single registration action, one client/tenant-ID instruction, descriptive component/step names, and a concise scope explanation followed by Expose an API configuration without duplicate Setup details, audience paragraphs or expected-result text. Screenshot: coding worktree .artifacts/implementation-access-guidance.png. Updated main-folder app remains on http://localhost:5077/. No tenant actions or live Entra tests were performed.
 
 Next action: collect copy feedback and continue remaining milestone 4 template coverage.
+
+## Sequential setup and download-only exports — complete, 2026-10-06
+
+Completed: moved client/tenant-ID guidance from Entra registration to each app's runtime configuration step in both shared and delegated-chain guides. Step content is now displayed as an ordered sequence. Registration remains focused on Entra actions. Removed script/Markdown preview panels, preview state, Copy/Close handlers and Close export buttons; all export buttons initiate downloads directly, with a brief error only if download initiation fails.
+
+Validation: all 104 tests passed. Preset-wide checks verify registration no longer includes client-ID guidance and each registered app's configuration step includes Directory (tenant) ID guidance. Browser walkthrough confirmed Configure Backend API is step 6 with numbered actions and client/tenant-ID setup first. Clicking Export PowerShell left zero export previews/textareas and zero Close script/export buttons. Screenshot: coding worktree .artifacts/implementation-sequential.png. The rebuilt main-folder app remains on http://localhost:5077/. No tenant changes were made.
+
+Next action: collect feedback on the step sequence; continue remaining milestone 4 platform coverage.

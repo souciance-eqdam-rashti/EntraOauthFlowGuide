@@ -67,7 +67,6 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
                 var audience = plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.SingleTenant
                     ? "Accounts in this organizational directory only" : "Accounts in any organizational directory";
                 content.Add(Portal($"Register {component.Name}; choose {audience}.", "Entra admin center", "Entra ID", "App registrations", "New registration"));
-                content.Add(Value(component.Id + ".clientId", component.Name + " client ID"));
                 if (decision.SignIn != SignInApproach.None)
                 {
                     var platform = component.Stack.Value switch {
@@ -125,7 +124,9 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             var decision = plan.Components.Single(c => c.ComponentId == component.Id);
             var outbound = plan.Relationships.Where(h => plan.Scenario.Relationships.Single(r => r.Id == h.RelationshipId).CallerComponentId == component.Id).ToArray();
             var validation = plan.ApiValidation.FirstOrDefault(v => v.ComponentId == component.Id);
-            var content = new List<GuideContent> { Text("Use the platform’s authentication library with this app’s tenant ID and client ID, or its managed identity. Keep credentials out of browser and desktop code.") };
+            var content = new List<GuideContent>();
+            if (decision.Credential != CredentialMechanism.ManagedIdentity) content.Add(Value(component.Id + ".clientId", "Configure client and tenant IDs", "Open this app’s Entra registration → Overview. Put Application (client) ID and Directory (tenant) ID into this app’s authentication configuration."));
+            content.Add(Text("Use the platform’s authentication library or managed identity SDK. Keep credentials out of browser and desktop code."));
             if (decision.SignIn != SignInApproach.None) content.Add(Text("Match sign-in callbacks to the registered redirect URI; handle cancellation and interaction-required responses through the library."));
             if (plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.Multitenant)
                 content.Add(Text("Use an organizational authority, allow only onboarded organizations and obtain their consent. Do not disable issuer validation."));
