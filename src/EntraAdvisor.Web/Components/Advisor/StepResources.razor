@@ -16,7 +16,7 @@
  sources=sources.Concat(flows.Distinct().Select(ArchitectureGuideGenerator.FlowSource));
  if(Plan.ApiValidation.Any(v=>v.ComponentId==Step.ComponentId)) sources=sources.Append(new DocumentationSource("API token validation and authorization",new Uri("https://learn.microsoft.com/en-us/entra/identity-platform/scenario-protected-web-api-app-configuration"),new DateOnly(2026,10,6)));
  }
- return sources.DistinctBy(s=>s.Url);
+ return sources.GroupBy(s=>s.Url).Select(group=>group.First() with { Title = string.Join(" · ", group.Select(s=>s.Title).Distinct()) });
  }
  }
 }

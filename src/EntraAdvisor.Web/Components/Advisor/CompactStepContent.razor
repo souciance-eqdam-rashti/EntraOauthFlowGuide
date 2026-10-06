@@ -1,5 +1,5 @@
 @using EntraAdvisor.Guide.Contracts
-<ol class="step-instructions">
+<ol class="step-instructions @(Step.Content.Length == 1 ? "single-instruction" : "")">
 @foreach(var content in Step.Content) {
     <li>
     @switch(content) {

@@ -32,8 +32,8 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  <section class="implementation-step-pane" aria-label="Selected implementation step" id="implementation-step-pane">
  <article><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId" ShowLinks="false"/> }
  <CompactStepContent Step="step" Plan="guide.Architecture"/>
- <StepResources Step="step" Plan="guide.Architecture" />
- </article></section>
+ 
+ </article><StepResources Step="step" Plan="guide.Architecture" /></section>
 
  </div>
  <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"><MudButton Variant="Variant.Outlined" OnClick="Export" StartIcon="@Icons.Material.Outlined.FileDownload">Export Markdown</MudButton><MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OpenDiagram" StartIcon="@Icons.Material.Outlined.AccountTree">Diagram Overview</MudButton></ValidationExport>
