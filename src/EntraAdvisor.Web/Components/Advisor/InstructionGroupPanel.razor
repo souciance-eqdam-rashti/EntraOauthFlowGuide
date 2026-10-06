@@ -5,7 +5,7 @@
  <div class="execution-group-body"><ol class="group-action-rows @(Group.Actions.Length == 1 ? "single-action" : "")">
  @foreach(var action in Group.Actions) { if(action is ExplanationContent explanation) { <li class="group-explanation"><MudExpansionPanels Elevation="0" Class="quiet-disclosures"><MudExpansionPanel Text="Why this setting?"><strong>@explanation.Title</strong><InstructionText Text="@explanation.Text"/></MudExpansionPanel></MudExpansionPanels></li> } else { <li>@switch(action) {
  case InstructionContent instruction: @if(!string.IsNullOrEmpty(instruction.Title)) { @if(instruction.Title != Group.Title) { <strong class="group-action-title">@instruction.Title</strong> } }<InstructionText Text="@instruction.Text"/> break;
- case CopyableValueContent value when value.Value.ReferenceOnly: <strong class="group-action-title">@value.Value.Label</strong><InstructionText Text="@value.Value.Guidance"/> break;
+ case CopyableValueContent value when value.Value.ReferenceOnly: @if(value.Value.Label != Group.Title) { <strong class="group-action-title">@value.Value.Label</strong> }<InstructionText Text="@value.Value.Guidance"/> break;
  case CopyableValueContent value: <ConfigurationTable Values="@(new[] { value.Value })" FieldHeading="Application setting" ValueHeading="Value to configure"/> break;
  case PortalActionContent portal: <InstructionText Text="@portal.Action"/> break;
  case ConfigurationRowsContent rows: @if(!string.IsNullOrEmpty(rows.Introduction)) { <InstructionText Text="@rows.Introduction"/> }<ConfigurationTable Values="rows.Values"/><div class="portal-final-action"><InstructionText Text="@rows.Instruction"/></div> break;

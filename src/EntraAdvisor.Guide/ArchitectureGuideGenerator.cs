@@ -143,7 +143,7 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             var outbound = plan.Relationships.Where(h => plan.Scenario.Relationships.Single(r => r.Id == h.RelationshipId).CallerComponentId == component.Id).ToArray();
             var validation = plan.ApiValidation.FirstOrDefault(v => v.ComponentId == component.Id);
             var content = new List<GuideContent>();
-            if (decision.Credential != CredentialMechanism.ManagedIdentity) content.Add(Value(component.Id + ".clientId", "Configure client and tenant IDs", "From Entra → App registration → Overview, set Application (client) ID and Directory (tenant) ID in this app’s authentication configuration."));
+            if (decision.Credential != CredentialMechanism.ManagedIdentity) content.Add(Value(component.Id + ".clientId", "Configure client and tenant IDs", "From Overview, note this registration’s Application (client) ID and Directory (tenant) ID. Enter them in the application settings below."));
 
             if (decision.SignIn != SignInApproach.None) content.Add(Text("Set the registered redirect URI in the sign-in library; handle sign-in cancellation and interaction-required responses.", "Configure sign-in callbacks"));
             if (plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.Multitenant)
@@ -151,12 +151,12 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             if (plan.Scenario.Tenants.IncludesGuestUsers.Value)
                 content.Add(Text("For guest access, sign the guest in using the applicable resource tenant; verify guest consent, assignment and API access.", "Configure guest access"));
             if (validation is not null) {
-                content.Add(Text("Configure JWT bearer authentication to validate the token’s signature, issuer, expiration and intended API audience.", "Validate incoming access tokens"));
-                content.Add(Text("For v2 tokens, `aud` must match this API’s application (client) ID. For v1 tokens, it may be the client ID or the API’s Application ID URI, such as `api://<api-client-id>`. Match the API registration and token version.", "Check the audience"));
+                content.Add(Text("In ASP.NET Core, use JWT bearer authentication to validate signature, issuer, expiry and audience.", "Validate incoming access tokens"));
+                content.Add(Text("For v2 access tokens, `aud` must equal this API’s application (client) ID.", "Check the audience"));
                 if(validation.Authorization.Any(a=>a.AcceptedIdentity==ActingIdentity.DelegatedUser))
-                    content.Add(Text("For delegated requests, require the scope needed by the operation—for example, `Orders.Read` in the token’s `scp` claim. A valid token alone does not authorize the operation.", "Enforce the required scope"));
+                    content.Add(Text("Require the operation’s delegated scope in `scp` (example: `Orders.Read`).", "Enforce the required scope"));
                 if(validation.Authorization.Any(a=>a.AcceptedIdentity==ActingIdentity.Application))
-                    content.Add(Text("For application requests, require the app role needed by the operation—for example, `Orders.Read.All` in the token’s `roles` claim. A valid token alone does not authorize the operation.", "Enforce the required app role"));
+                    content.Add(Text("Require the operation’s application role in `roles` (example: `Orders.Read.All`).", "Enforce the required app role"));
             }
             foreach (var hop in outbound) {
                 switch(hop.Acquisition) {
@@ -182,10 +182,16 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             if (outbound.Length > 0) content.Add(Text("Send the access token as `Authorization: Bearer`. Use the library’s token cache.", "Call the target API"));
             var concreteBrowser = (component.Stack.Value == ImplementationStack.JavaScriptTypeScript || component.Stack.Value == ImplementationStack.BlazorWebAssembly) && decision.SignIn != SignInApproach.None && decision.SignIn != SignInApproach.DeviceCode && outbound.Length == 1 && outbound[0].Acquisition == TokenAcquisition.AuthorizationCode && plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.SingleTenant && !plan.Scenario.Tenants.IncludesGuestUsers.Value && plan.Scenario.Resources.Single(r=>r.Id==plan.Scenario.Relationships.Single(h=>h.Id==outbound[0].RelationshipId).TargetResourceId).Category.Value == ResourceCategory.CustomResource;
             var targetName = concreteBrowser ? plan.Scenario.Resources.Single(r=>r.Id==plan.Scenario.Relationships.Single(h=>h.Id==outbound[0].RelationshipId).TargetResourceId).Name : "";
-            if(concreteBrowser) content=component.Stack.Value == ImplementationStack.BlazorWebAssembly ? BlazorBrowserConfigurationContent.Create(component.Id,component.Name,targetName) : BrowserConfigurationContent.Create(component.Id,component.Name,targetName);
+            if(concreteBrowser) content=GenericBrowserConfigurationContent.Create(component.Id,component.Name,targetName);
+            if(validation is not null && component.Stack.Value == ImplementationStack.AspNetCoreApi) {
+                content.Insert(1,new CodeContent(new("api-settings",component.Id,"json","appsettings.json", "{\n  \"AzureAd\": {\n    \"Instance\": \"https://login.microsoftonline.com/\",\n    \"TenantId\": \"<tenant-id>\",\n    \"ClientId\": \"<backend-api-client-id>\"\n  }\n}")) { GroupTitle="Configure ASP.NET Core authentication",GroupSystem="Code",GroupLocation=[component.Name,"appsettings.json"] });
+                content.Insert(2,new InstructionContent("Bind `AzureAd` with Microsoft.Identity.Web’s `AddMicrosoftIdentityWebApi`. In Program.cs, call `UseAuthentication()` before `UseAuthorization()` and protect API endpoints with authorization policies.") { Title="Wire authentication and authorization",GroupTitle="Protect the API endpoints",GroupSystem="Code",GroupLocation=[component.Name,"Program.cs"] });
+                content=content.Select(c=>c is InstructionContent i && i.GroupLocation.IsEmpty ? i with { GroupTitle="Protect the API endpoints",GroupSystem="Code",GroupLocation=[component.Name,"Program.cs"] } : c).ToList();
+                content.Add(new PortalActionContent(["App registrations",component.Name,"Manifest"],"Set `api.requestedAccessTokenVersion` to `2`, preserving the other manifest fields. Select `Save` in Entra.") { Title="Issue v2 access tokens" });
+            }
             Add("configure-" + component.Id, GuideSection.Configuration, "Configure " + component.Name, component.Id,
-                "Implement sign-in, token acquisition and API authorization where required for this component.", concreteBrowser ? $"A user can sign in, and {component.Name} can call {targetName} using an access token issued for that API." : "The component uses its own identity and the correct token and authorization settings.", content,
-                [Source("Platform implementation guidance", PlatformUrl(component.Stack.Value)), .. outbound.Select(h => FlowSource(h.Acquisition)), .. (validation is null ? Array.Empty<DocumentationSource>() : new[] { tokens }), .. (decision.SignIn == SignInApproach.None ? Array.Empty<DocumentationSource>() : new[] { FlowSource(decision.SignIn == SignInApproach.DeviceCode ? TokenAcquisition.DeviceCode : TokenAcquisition.AuthorizationCode) })], outbound.Select(h => h.RelationshipId));
+                "Implement sign-in, token acquisition and API authorization where required for this component.", concreteBrowser ? $"A user can sign in, and {component.Name} can call {targetName} using an access token issued for that API." : validation is not null ? "Authorized API calls succeed. Missing or invalid tokens return 401; insufficient permissions return 403." : "The component uses its own identity and the correct token and authorization settings.", content,
+                [Source("Platform implementation guidance", concreteBrowser ? Learn + "scenario-spa-app-configuration" : PlatformUrl(component.Stack.Value)), .. outbound.Select(h => FlowSource(h.Acquisition)), .. (validation is null ? Array.Empty<DocumentationSource>() : new[] { tokens }), .. (decision.SignIn == SignInApproach.None ? Array.Empty<DocumentationSource>() : new[] { FlowSource(decision.SignIn == SignInApproach.DeviceCode ? TokenAcquisition.DeviceCode : TokenAcquisition.AuthorizationCode) })], outbound.Select(h => h.RelationshipId));
         }
         Add("verify", GuideSection.TestAndTroubleshoot, "Verify the complete flow", first,
             "Run positive and negative access checks in your test tenant.", "Allowed calls succeed; missing, invalid and unauthorized tokens are rejected.",

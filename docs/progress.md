@@ -313,3 +313,7 @@ Grouped instructions into reusable bordered disclosures with attached system/pag
 
 ## Simplified registration and permissions
 Removed group completion buttons, undo completion and all configuration Copy controls. Registration names are developer placeholders; fixed account-type selections remain scenario-derived. Suppressed repeated action headings and numbering for single-action groups. Added a compact, collapsed permissions/consent comparison with small access routes based on Microsoft Learn. Caller permission setup uses labeled target/type/permission rows, with separate conditional consent instructions. UI and Markdown share the same authored content. All 105 tests pass. Registration and permission views checked at desktop and 390px widths without document overflow.
+
+
+## Compact API and framework-neutral browser configuration
+ASP.NET Core configuration now separates appsettings.json values, Program.cs authentication/authorization and Entra v2 token issuance. Validation copy is v2-only and includes an optional compact authentication/authorization comparison. Browser configuration replaces framework-specific samples with a generic appsettings.json placeholder example and concise token-use actions; generic keys must be mapped to the chosen library. Markdown retains the displayed configuration. Existing checks pass; desktop and 390px browser view has no document overflow.

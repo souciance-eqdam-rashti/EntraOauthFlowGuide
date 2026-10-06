@@ -37,12 +37,12 @@ public sealed class ArchitectureGuideTests
             var groups=InstructionGroups.Create(step,plan);
             Assert.Equal(step.Content,groups.SelectMany(g=>g.Actions));
             Assert.All(groups,g=> { Assert.NotEmpty(g.Location); Assert.NotEmpty(g.Title); });
-            if(step.Content.OfType<CodeContent>().Any(c=>c.Artifact.Id is "browser-auth" or "blazor-browser-auth")) {
+            if(step.Content.OfType<CodeContent>().Any(c=>c.Artifact.Id is "browser-auth" or "blazor-browser-auth" or "browser-settings")) {
                 Assert.Equal(3,groups.Length);
                 Assert.Equal(new[] { "Entra","Code","Api" },groups.Select(g=>g.System));
                 Assert.DoesNotContain(groups[0].Actions,c=>c is CodeContent);
-                Assert.Contains(groups[1].Actions,c=>c is CodeContent code && (code.Artifact.DestinationFile=="redirect.html" || code.Artifact.DestinationFile=="wwwroot/appsettings.json"));
-                Assert.Contains(groups[2].Actions,c=>c is CodeContent code && (code.Artifact.Content.Contains("result.accessToken") || code.Artifact.Content.Contains("AuthorizationMessageHandler")));
+                Assert.Contains(groups[1].Actions,c=>c is CodeContent code && (code.Artifact.DestinationFile=="redirect.html" || code.Artifact.DestinationFile=="wwwroot/appsettings.json" || code.Artifact.DestinationFile=="appsettings.json"));
+                Assert.Contains(groups[2].Actions,c=>c is InstructionContent instruction && instruction.Text.Contains("Authorization: Bearer"));
                 Assert.Contains("using an access token issued for that API",step.ExpectedResult);
             }
         }
