@@ -40,6 +40,11 @@ public sealed class ArchitectureGuideTests
         Assert.All(plan.Relationships,hop=>Assert.Contains(guide.Steps,s=>s.RelatedRelationshipIds.Contains(hop.RelationshipId)));
         Assert.All(plan.Registrations,registration=>Assert.Contains(guide.Steps,s=>s.Id=="register-"+registration.ComponentId || s.Id=="register-web"));
         Assert.All(guide.Steps.Where(s=>s.Id.StartsWith("register-")),step=>Assert.DoesNotContain(step.Content.OfType<CopyableValueContent>(),v=>v.Value.Label.Contains("client ID")));
+        Assert.All(guide.Steps.SelectMany(s=>s.Content).OfType<CopyableValueContent>().Where(v=>v.Value.Key.EndsWith(".clientId")), value => {
+            Assert.True(value.Value.ReferenceOnly);
+            Assert.False(value.Value.CanCopy);
+            Assert.DoesNotContain(value.Value.Value,markdown);
+        });
         Assert.All(plan.Registrations.Where(r=>r.CreateRegistration),registration=>Assert.Contains(guide.Steps.Single(s=>s.Id=="configure-"+registration.ComponentId).Content.OfType<CopyableValueContent>(),v=>v.Value.Guidance.Contains("Directory (tenant) ID")));
     }
     [Fact]

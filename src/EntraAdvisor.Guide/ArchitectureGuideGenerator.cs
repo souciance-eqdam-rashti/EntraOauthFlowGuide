@@ -45,13 +45,14 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             IEnumerable<GuideContent> content, IEnumerable<DocumentationSource> references, IEnumerable<string>? hops = null)
         {
             steps.Add(new() { Id = id, Section = section, Title = title, ComponentId = component, Purpose = action,
-                Action = action, ExpectedResult = expected, Content = content.ToImmutableArray(), Sources = references.DistinctBy(s => s.Url).ToImmutableArray(),
+                Action = action, ExpectedResult = expected, Content = content.Select(c => c is InstructionContent i && section is GuideSection.Configuration or GuideSection.TestAndTroubleshoot
+                    ? i with { Location = [section == GuideSection.TestAndTroubleshoot ? "Test tenant · each connection and the complete flow" : plan.Scenario.Components.Single(c=>c.Id==component).Name + " · authentication configuration"], LocationLabel = section == GuideSection.TestAndTroubleshoot ? "Test location" : "Application configuration" } : c).ToImmutableArray(), Sources = references.DistinctBy(s => s.Url).ToImmutableArray(),
                 DependsOnStepIds = steps.Count == 0 ? [] : [steps[^1].Id], RelatedRelationshipIds = hops?.ToImmutableArray() ?? [] });
         }
         GuideContent Text(string text, string title = "") => new InstructionContent(text) { Title = title };
         GuideContent Portal(string action, params string[] path) => new PortalActionContent(path.ToImmutableArray(), action);
         GuideContent Value(string key, string label, string? guidance = null) => new CopyableValueContent(new(key, label, "__" + key.Replace('.', '_').Replace('-', '_').ToUpperInvariant() + "__",
-            GuideValueKind.DeveloperSupplied, guidance ?? (label.Contains("client ID") ? "From Overview, use this registration’s Application (client) ID and Directory (tenant) ID in the app configuration." : "Use the target resource’s identifier from Entra; request a separate token for each resource.")));
+            GuideValueKind.DeveloperSupplied, guidance ?? (label.Contains("client ID") ? "From Overview, use this registration’s Application (client) ID and Directory (tenant) ID in the app configuration." : "Use the target resource’s identifier from Entra; request a separate token for each resource.")) { ReferenceOnly = true, CanCopy = false });
         var first = plan.Scenario.Components[0].Id;
         Add("prepare", GuideSection.Prerequisites, "Prepare your Entra tenant", first,
             "Confirm access to the test tenant and administrator support for consent and assignments.",

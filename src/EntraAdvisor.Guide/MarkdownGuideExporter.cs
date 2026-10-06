@@ -14,8 +14,9 @@ public sealed class MarkdownGuideExporter : IGuideExporter
         foreach(var s in guide.Steps) {
             b.AppendLine($"\n## {s.Title}\n\nStep ID: {s.Id} · component: {s.ComponentId}\n\n{s.Action}\n");
             foreach(var c in s.Content) switch(c) {
-                case InstructionContent i: if(!string.IsNullOrEmpty(i.Title)) b.AppendLine("### "+i.Title+"\n"); b.AppendLine(i.Text+"\n"); break;
+                case InstructionContent i: if(!i.Location.IsEmpty) b.AppendLine(i.LocationLabel+": "+string.Join(" → ",i.Location)+"\n"); if(!string.IsNullOrEmpty(i.Title)) b.AppendLine("### "+i.Title+"\n"); b.AppendLine(i.Text+"\n"); break;
                 case PortalActionContent p: b.AppendLine(string.Join(" → ",p.Breadcrumbs)+"\n\n"+p.Action+"\n"); break;
+                case CopyableValueContent v when v.Value.ReferenceOnly: b.AppendLine($"**{v.Value.Label}**\n\n{v.Value.Guidance}\n"); break;
                 case CopyableValueContent v: b.AppendLine($"**{v.Value.Label}**: `{v.Value.Value}`\n\n{v.Value.Guidance}\n"); break;
                 case ConfigurationRowsContent rows:
                     b.AppendLine($"**{rows.Title}**\n\nOpen in Entra: {string.Join(" → ", rows.Breadcrumbs)}\n");

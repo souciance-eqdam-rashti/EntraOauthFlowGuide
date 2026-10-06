@@ -1,6 +1,9 @@
 <div class="implementation-actions">
 @foreach(var group in Groups()) {
  @switch(group[0]) {
+  case CopyableValueContent reference when reference.Value.ReferenceOnly:
+   @foreach(var value in group.Cast<CopyableValueContent>()) { <ImplementationAction Title="@value.Value.Label" Path="@(new[] { "App registrations", ComponentName, "Overview" })"><p>@value.Value.Guidance</p></ImplementationAction> }
+   break;
   case CopyableValueContent:
    <ImplementationAction Title="Configure settings"><div class="configuration-rows">@foreach(var value in group.Cast<CopyableValueContent>()) { <ConfigurationValueRow Value="value.Value" /> }</div></ImplementationAction>
    break;
@@ -8,7 +11,7 @@
    <ImplementationAction Title="@portal.Title" Path="@PortalPath(portal.Breadcrumbs)"><p>@portal.Action</p></ImplementationAction>
    break;
   case InstructionContent:
-   <ImplementationAction Title="@GroupTitle(group)">@foreach(var instruction in group.Cast<InstructionContent>()) { <p>@instruction.Text</p> }</ImplementationAction>
+   <ImplementationAction Title="@GroupTitle(group)" Path="@((group[0] as InstructionContent)!.Location)" PathLabel="@((group[0] as InstructionContent)!.LocationLabel)">@foreach(var instruction in group.Cast<InstructionContent>()) { <p>@instruction.Text</p> }</ImplementationAction>
    break;
   case ConfigurationRowsContent rows:
    <ImplementationAction Title="@rows.Title" Path="@PortalPath(rows.Breadcrumbs)"><div class="configuration-rows">@foreach(var value in rows.Values) { <ConfigurationValueRow Value="value" CanCopy="@(value.CanCopy && value.Kind != GuideValueKind.Derived)" /> }</div><p>@rows.Instruction</p></ImplementationAction>
@@ -26,10 +29,11 @@
 @code {
  [Parameter,EditorRequired] public GuideStep Step {get;set;}=null!;
  [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
+ private string ComponentName => Plan.Scenario.Components.First(c=>c.Id==Step.ComponentId).Name;
  private IEnumerable<List<GuideContent>> Groups() {
   var groups=new List<List<GuideContent>>();
   foreach(var content in Step.Content) {
-   if(groups.Count>0 && (content is InstructionContent i && string.IsNullOrEmpty(i.Title) && groups[^1][0] is InstructionContent || content is CopyableValueContent && groups[^1][0] is CopyableValueContent)) groups[^1].Add(content);
+   if(groups.Count>0 && (content is InstructionContent i && string.IsNullOrEmpty(i.Title) && groups[^1][0] is InstructionContent || content is CopyableValueContent v && groups[^1][0] is CopyableValueContent previous && v.Value.ReferenceOnly == previous.Value.ReferenceOnly)) groups[^1].Add(content);
    else groups.Add(new() { content });
   }
   return groups;
