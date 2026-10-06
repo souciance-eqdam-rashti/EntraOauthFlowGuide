@@ -6,7 +6,7 @@ public sealed class WorkspaceTests
 {
  private static AdvisorWorkspace Ready() {
   var w=new AdvisorWorkspace();
-  foreach(var pair in new[]{("api-a.canprotectcredentials","True"),("api-a.credential","Certificate"),("web.canprotectcredentials","True"),("web.credential","Certificate"),("tenants.model","SingleTenant"),("tenants.includesguestusers","False"),("orders-inventory.tenantboundary","SameTenant"),("web-orders.tenantboundary","SameTenant")}) w.Apply(new(pair.Item1,[pair.Item2]));
+  foreach(var pair in new[]{("tenants.model","SingleTenant"),("tenants.includesguestusers","False"),("orders-inventory.tenantboundary","SameTenant"),("web-orders.tenantboundary","SameTenant"),("api-a.canprotectcredentials","True"),("api-a.credential","Certificate"),("web.canprotectcredentials","True"),("web.credential","Certificate")}) w.Apply(new(pair.Item1,[pair.Item2]));
   Assert.NotNull(w.Session.Evaluation.Plan);w.SetGuide(new DelegatedChainGuideGenerator().Generate(w.Session.Evaluation.Plan!,new([])));return w;
  }
  [Fact] public void Reopening_a_completed_prerequisite_clears_dependent_confirmation() {

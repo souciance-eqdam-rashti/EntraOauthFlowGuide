@@ -39,6 +39,21 @@ public sealed class QuestionnaireTests
     }
 
     [Fact]
+    public void CredentialChoicesExcludeUnsupportedManagedIdentityAndOboFederation()
+    {
+        var chain = ScenarioExamples.Chain();
+        var questions = QuestionCatalog.ForScenario(chain);
+        Assert.DoesNotContain(questions.Single(q => q.Id == "web.credential").Options, o => o.Id == "ManagedIdentity");
+        Assert.Single(questions.Single(q => q.Id == "api-a.credential").Options);
+        var worker = ScenarioExamples.Worker(managed: true);
+        Assert.Contains(QuestionCatalog.ForScenario(worker).Single(q => q.Id == "worker.credential").Options, o => o.Id == "ManagedIdentity");
+        Assert.Equal(EvaluationStatus.Ready, QuestionnaireSession.Create(worker).Apply(new("worker.credential", ["ManagedIdentity"])).Session.Evaluation.Status);
+        var crossTenant = worker with { Relationships = [worker.Relationships[0] with { TenantBoundary = Fact<TenantBoundary>.Supplied(TenantBoundary.CrossTenant) }] };
+        Assert.DoesNotContain(QuestionCatalog.ForScenario(crossTenant).Single(q => q.Id == "worker.credential").Options, o => o.Id == "ManagedIdentity");
+        Assert.DoesNotContain(QuestionCatalog.ForScenario(ScenarioExamples.Worker()).Single(q => q.Id == "worker.credential").Options, o => o.Id == "ManagedIdentity");
+    }
+
+    [Fact]
     public void UnansweredFactsRemainUnknownAndNotSureIsRejected()
     {
         var scenario = ScenarioExamples.Worker();

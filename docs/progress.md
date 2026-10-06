@@ -281,3 +281,6 @@ Completed: moved client/tenant-ID guidance from Entra registration to each app's
 Validation: all 104 tests passed. Preset-wide checks verify registration no longer includes client-ID guidance and each registered app's configuration step includes Directory (tenant) ID guidance. Browser walkthrough confirmed Configure Backend API is step 6 with numbered actions and client/tenant-ID setup first. Clicking Export PowerShell left zero export previews/textareas and zero Close script/export buttons. Screenshot: coding worktree .artifacts/implementation-sequential.png. The rebuilt main-folder app remains on http://localhost:5077/. No tenant changes were made.
 
 Next action: collect feedback on the step sequence; continue remaining milestone 4 platform coverage.
+
+## Implementation feedback: compact configuration and valid identity choices
+Removed value-guidance boxes, shortened configuration actions, added explicit conditional delegated and mandatory application admin-consent actions, filtered unsupported Managed Identity and OBO federation choices, and made the title restart the design. Credential answers now invalidate when tenant boundaries change. Verified title navigation and backend presentation in the browser.

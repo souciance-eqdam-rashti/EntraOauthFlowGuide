@@ -112,7 +112,11 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             else if (hop.Credential == CredentialMechanism.ManagedIdentity)
                 content.Add(Text("Assign the target’s application role to the managed identity’s service principal in the resource tenant. Managed identity has no caller app registration; use an authorized administrator and the provider’s assignment procedure."));
             else
-                content.Add(Portal($"On {caller}, select {resource.Name} → {(hop.Identity == ActingIdentity.DelegatedUser ? "Delegated permissions: choose the target scope (for example Orders.Read for a custom API or User.Read for Graph) because this call acts for a user" : "Application permissions: choose the target app role (for example Orders.Read.All for a custom API or User.Read.All for Graph) because this call has no user")}. Grant consent as required by the selected permission and tenant policy.", "Caller app registration", "API permissions", "Add a permission"));
+                content.Add(Portal($"On {caller}, select {resource.Name} → {(hop.Identity == ActingIdentity.DelegatedUser ? "Delegated permissions: choose the target scope (for example Orders.Read for a custom API or User.Read for Graph) because this call acts for a user" : "Application permissions: choose the target app role (for example Orders.Read.All for a custom API or User.Read.All for Graph) because this call has no user")}. Choose only permissions this caller needs.", "Caller app registration", "API permissions", "Add a permission"));
+            if (resource.Category.Value != ResourceCategory.AzureResource && hop.Credential != CredentialMechanism.ManagedIdentity)
+                content.Add(hop.Identity == ActingIdentity.Application
+                    ? Portal("Have an administrator select Grant admin consent for this tenant. Application permissions always require admin consent.", "Caller app registration", "API permissions")
+                    : Portal("Check Admin consent required for the selected scopes. If Yes, or tenant policy blocks user consent, have an administrator select Grant admin consent for this tenant. Otherwise users can consent at sign-in; admin consent can also cover all users.", "Caller app registration", "API permissions"));
             if (relationship.TenantBoundary.Value == TenantBoundary.CrossTenant)
                 content.Add(Text("In the resource tenant, provision the caller’s service principal and consent/assignments. Verify cross-tenant support and acquire the token in that tenant; home-tenant consent is not sufficient."));
             Add("permission-" + hop.RelationshipId, GuideSection.PermissionsAndConsent, "Allow " + caller + " to call " + resource.Name,
@@ -125,23 +129,27 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             var outbound = plan.Relationships.Where(h => plan.Scenario.Relationships.Single(r => r.Id == h.RelationshipId).CallerComponentId == component.Id).ToArray();
             var validation = plan.ApiValidation.FirstOrDefault(v => v.ComponentId == component.Id);
             var content = new List<GuideContent>();
-            if (decision.Credential != CredentialMechanism.ManagedIdentity) content.Add(Value(component.Id + ".clientId", "Configure client and tenant IDs", "Open this app’s Entra registration → Overview. Put Application (client) ID and Directory (tenant) ID into this app’s authentication configuration."));
-            content.Add(Text("Use the platform’s authentication library or managed identity SDK. Keep credentials out of browser and desktop code."));
-            if (decision.SignIn != SignInApproach.None) content.Add(Text("Match sign-in callbacks to the registered redirect URI; handle cancellation and interaction-required responses through the library."));
+            if (decision.Credential != CredentialMechanism.ManagedIdentity) content.Add(Value(component.Id + ".clientId", "Configure client and tenant IDs", "From Entra → App registration → Overview, set Application (client) ID and Directory (tenant) ID in this app’s authentication configuration."));
+
+            if (decision.SignIn != SignInApproach.None) content.Add(Text("Set the registered redirect URI in the sign-in library; handle sign-in cancellation and interaction-required responses."));
             if (plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.Multitenant)
                 content.Add(Text("Use an organizational authority, allow only onboarded organizations and obtain their consent. Do not disable issuer validation."));
             if (plan.Scenario.Tenants.IncludesGuestUsers.Value)
                 content.Add(Text("For guest access, sign the guest in using the applicable resource tenant; verify guest consent, assignment and API access."));
             if (validation is not null)
-                content.Add(Text("Configure bearer-token validation against this API’s audience and trusted issuer; check signature and expiry. For v2 tokens use this API’s client ID as aud, e.g. 11111111-2222-3333-4444-555555555555; a v1 audience can be api://<api-client-id>. Enforce scp for user calls and roles or the resource’s application-access policy for app calls."));
+                content.Add(Text("Validate token signature, issuer, expiry and audience using bearer middleware. For v2 tokens, audience is this API’s client ID (e.g. 11111111-2222-3333-4444-555555555555); for v1 it can be api://<api-client-id>. " + ((validation.Authorization.Any(a => a.AcceptedIdentity == ActingIdentity.DelegatedUser), validation.Authorization.Any(a => a.AcceptedIdentity == ActingIdentity.Application)) switch {
+                    (true, false) => "Require the operation’s scope in scp, e.g. Orders.Read.",
+                    (false, true) => "Require the operation’s app role in roles, e.g. Orders.Read.All.",
+                    _ => "For user calls check scp (Orders.Read); for app calls check roles (Orders.Read.All)."
+                })));
             foreach (var hop in outbound)
                 content.Add(Text(hop.Acquisition switch {
                     TokenAcquisition.OnBehalfOf => "Use on-behalf-of with this API’s incoming user token and protected credential to request downstream scopes. Never forward the incoming token to another audience; return interaction-required challenges to the client.",
                     TokenAcquisition.ClientCredentials => "Acquire a token as the application using its certificate, federated assertion or managed identity. Request the target resource’s /.default, backed by granted application permissions or resource roles.",
                     TokenAcquisition.DeviceCode => "Display the library’s device-code sign-in prompt; handle cancellation, expiry and tenant policy restrictions.",
-                    _ => "Request the target’s delegated scopes using authorization code with PKCE; use silent acquisition when possible."
+                    _ => "Use the platform’s sign-in library with authorization code + PKCE. Request the backend scope (e.g. api://<backend-client-id>/Orders.Read); acquire silently when possible."
                 }));
-            if (outbound.Length > 0) content.Add(Text("Send the target token in Authorization: Bearer. Use the library’s token cache; multiple server instances need a protected shared cache."));
+            if (outbound.Length > 0) content.Add(Text("Send the access token as Authorization: Bearer. Use the library’s token cache."));
             Add("configure-" + component.Id, GuideSection.Configuration, "Configure " + component.Name, component.Id,
                 "Implement sign-in, token acquisition and API authorization where required for this component.", "The component uses its own identity and the correct token and authorization settings.", content,
                 [Source("Platform implementation guidance", PlatformUrl(component.Stack.Value)), .. outbound.Select(h => FlowSource(h.Acquisition)), .. (validation is null ? Array.Empty<DocumentationSource>() : new[] { tokens }), .. (decision.SignIn == SignInApproach.None ? Array.Empty<DocumentationSource>() : new[] { FlowSource(decision.SignIn == SignInApproach.DeviceCode ? TokenAcquisition.DeviceCode : TokenAcquisition.AuthorizationCode) })], outbound.Select(h => h.RelationshipId));

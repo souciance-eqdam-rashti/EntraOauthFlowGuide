@@ -3,7 +3,7 @@
 @inject IJSRuntime JS
 @using EntraAdvisor.Guide
 <PageTitle>Entra OAuth Advisor</PageTitle>
-<header><a href="/">◈ Entra OAuth Advisor</a><span>Architecture → implementation</span><button @onclick="Reset">Start over</button></header>
+<header><a href="/" @onclick="Reset" @onclick:preventDefault>◈ Entra OAuth Advisor</a><span>Architecture → implementation</span><button @onclick="Reset">Start over</button></header>
 <main class="@(W.Stage == JourneyStage.Implement ? "implement-page" : "")">
 <nav aria-label="Journey">@foreach(var stage in Enum.GetValues<JourneyStage>()) { <button aria-current="@(W.Stage == stage ? "step" : null)" disabled="@(stage != JourneyStage.Design && W.Session.Evaluation.Plan is null)" @onclick="() => Navigate(stage)">@((int)stage+1). @stage</button> }</nav>
 <div class="workspace choosing-topology"><section class="work-panel">

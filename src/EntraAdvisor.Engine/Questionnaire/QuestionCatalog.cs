@@ -54,10 +54,15 @@ public static class QuestionCatalog
             var incoming = scenario.Relationships.Where(h => scenario.Resources.Any(r => r.Id == h.TargetResourceId && r.ApiComponentId == id)).Select(h => Id(h.Id, "Identity"));
             questions.Add(Choice(id, "IncomingIdentity", "Connections", $"What identity reaches {name} from its callers?",
                 [Option(IncomingTokenIdentity.DelegatedUser, "Signed-in user", "Incoming tokens represent a user."), Option(IncomingTokenIdentity.Application, "Application", "Incoming tokens represent an application."), Option(IncomingTokenIdentity.Both, "Both", "Authorize user and application calls separately.")], [Id(id, "Kind"), .. incoming]));
-            var outbound = scenario.Relationships.Where(h => h.CallerComponentId == id).Select(h => Id(h.Id, "Identity"));
+            var outboundHops = scenario.Relationships.Where(h => h.CallerComponentId == id).ToArray();
+            var outbound = outboundHops.Select(h => Id(h.Id, "Identity"));
+            var obo = component.Kind.Value == ComponentKind.Api && outboundHops.Any(h => h.Identity.State == FactState.Known && h.Identity.Value == ActingIdentity.DelegatedUser);
+            var credentialOptions = new List<QuestionOption> { Option(CredentialCapability.Certificate, "Certificate", "Keep the private key protected; upload only the public certificate.") };
+            if (!obo) credentialOptions.Add(Option(CredentialCapability.WorkloadFederation, "Federated workload identity", "Use a supported external identity trust without a client secret."));
+            if (ArchitectureEvaluator.SupportsManagedIdentity(scenario, id)) credentialOptions.Add(Option(CredentialCapability.ManagedIdentity, "Managed identity", "Use a supported Azure host identity for app-only access."));
             questions.Add(Choice(id, "Credential", "Hosting", $"How should {name} authenticate its server identity?",
-                [Option(CredentialCapability.Certificate, "Certificate", "Keep the private key protected; upload only the public certificate."), Option(CredentialCapability.WorkloadFederation, "Federated workload identity", "Use a supported external identity trust without a client secret."), Option(CredentialCapability.ManagedIdentity, "Managed identity", "Use a supported Azure host identity for app-only access.")],
-                [Id(id, "Kind"), Id(id, "Stack"), Id(id, "UserSignIn"), Id(id, "CanProtectCredentials"), Id(id, "Hosting"), Id(id, "ManagedIdentityAvailable"), .. outbound]));
+                credentialOptions,
+                [Id(id, "Kind"), Id(id, "Stack"), Id(id, "UserSignIn"), Id(id, "CanProtectCredentials"), Id(id, "Hosting"), Id(id, "ManagedIdentityAvailable"), .. outbound, .. outboundHops.Select(h => Id(h.Id, "TenantBoundary"))]));
         }
         foreach (var resource in scenario.Resources)
             questions.Add(Choice(resource.Id, "Category", "Connections", $"What kind of resource is {resource.Name}?",

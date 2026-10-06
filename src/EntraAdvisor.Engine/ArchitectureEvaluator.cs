@@ -132,13 +132,25 @@ public sealed class ArchitectureEvaluator : IArchitectureEvaluator
             else
             {
                 Require(caller.Hosting, caller.Id, "Hosting", "Where will the application run?");
-                if ((caller.Credential.State != FactState.Known || caller.Credential.Value == CredentialCapability.ManagedIdentity) && caller.Hosting.State == FactState.Known && caller.Hosting.Value == HostingEnvironment.Azure)
+                if (SupportsManagedIdentity(scenario, caller.Id) && (caller.Credential.State != FactState.Known || caller.Credential.Value == CredentialCapability.ManagedIdentity) && caller.Hosting.State == FactState.Known && caller.Hosting.Value == HostingEnvironment.Azure)
                     Require(caller.ManagedIdentityAvailable, caller.Id, "ManagedIdentityAvailable", "Can this Azure host use managed identity?");
-                if (!IsManaged(caller, hop) && !(caller.Hosting.State == FactState.Known && caller.Hosting.Value == HostingEnvironment.Azure && caller.ManagedIdentityAvailable.State == FactState.Unknown && caller.Credential.State == FactState.Unknown))
+                if (!IsManaged(caller, hop) && !(caller.Hosting.State == FactState.Known && caller.Hosting.Value == HostingEnvironment.Azure && caller.ManagedIdentityAvailable.State == FactState.Unknown && caller.Credential.State == FactState.Unknown && SupportsManagedIdentity(scenario, caller.Id)))
                     Require(caller.Credential, caller.Id, "Credential", "Choose a certificate or supported workload federation.");
             }
         }
         return issues.DistinctBy(issue => issue.Fact).ToImmutableArray();
+    }
+
+    public static bool SupportsManagedIdentity(ArchitectureScenario scenario, string componentId)
+    {
+        var component = scenario.Components.Single(c => c.Id == componentId);
+        var outbound = scenario.Relationships.Where(h => h.CallerComponentId == componentId).ToArray();
+        return !ScenarioValidation.IsTrue(component.UserSignIn) && !ScenarioValidation.IsFalse(component.CanProtectCredentials) &&
+            !(component.Hosting.State == FactState.Known && component.Hosting.Value != HostingEnvironment.Azure) &&
+            !ScenarioValidation.IsFalse(component.ManagedIdentityAvailable) &&
+            outbound.Length > 0 && outbound.All(h =>
+                !(h.Identity.State == FactState.Known && h.Identity.Value != ActingIdentity.Application) &&
+                !(h.TenantBoundary.State == FactState.Known && h.TenantBoundary.Value == TenantBoundary.CrossTenant));
     }
 
     private static bool NeedsCredential(ApplicationComponent component, ArchitectureScenario scenario) =>
