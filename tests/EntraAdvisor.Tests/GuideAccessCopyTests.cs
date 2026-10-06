@@ -6,7 +6,7 @@ namespace EntraAdvisor.Tests;
 public sealed class GuideAccessCopyTests
 {
     [Theory]
-    [InlineData(true,false,"Use scopes:")]
+    [InlineData(true,false,"This caller acts for a signed-in user.")]
     [InlineData(false,true,"Use app roles:")]
     [InlineData(true,true,"Use both:")]
     public void AccessStepExplainsOnlyTheIdentityModesActuallyAccepted(bool users,bool applications,string explanation)
@@ -42,7 +42,9 @@ public sealed class GuideAccessCopyTests
         var fields=registration.Content.OfType<ConfigurationRowsContent>().First();
         Assert.All(fields.Values,v=> { Assert.False(v.IsTechnical); Assert.False(v.CanCopy); });
         Assert.Equal("Then select `Register` in Entra.",fields.Instruction);
-        Assert.True(fields.Values.Single(v=>v.Label=="Name").CopyInForm);
+        Assert.False(fields.Values.Single(v=>v.Label=="Name").CopyInForm);
+        Assert.Equal(GuideValueKind.DeveloperSupplied,fields.Values.Single(v=>v.Label=="Name").Kind);
+        Assert.StartsWith("<name of your ",fields.Values.Single(v=>v.Label=="Name").Value);
         Assert.False(fields.Values.Single(v=>v.Label=="Supported account types").CopyInForm);
         Assert.DoesNotContain(access.Content,c=>c is CopyableValueContent);
         Assert.DoesNotContain(access.Content.OfType<InstructionContent>(),c=>c.Text.Contains("Record the API"));

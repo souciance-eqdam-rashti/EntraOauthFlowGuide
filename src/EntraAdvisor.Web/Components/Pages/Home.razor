@@ -37,7 +37,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  <div class="step-completion">
  @if(W.Completion[W.ActiveStep].State == CompletionState.Complete) {
  @if(W.ActiveStep+1 < guide.Steps.Length) { <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SelectStep(W.ActiveStep+1)">Continue</MudButton> }
- <MudButton Variant="Variant.Text" OnClick="() => W.SetCompletion(CompletionState.InProgress)">Undo completion</MudButton>
+
  } else { <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CompleteStep">@(W.ActiveStep+1 < guide.Steps.Length ? "Mark complete and continue" : "Mark complete")</MudButton> }
  @if(W.ActiveStep+1 < guide.Steps.Length) { <MudText Typo="Typo.caption">Next: @guide.Steps[W.ActiveStep+1].Title</MudText> }
 

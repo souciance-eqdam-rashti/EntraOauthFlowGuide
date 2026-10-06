@@ -1,5 +1,6 @@
 @using EntraAdvisor.Guide
 <div class="implementation-actions execution-groups">
+@if(Step.Section is GuideSection.ResourceRegistration or GuideSection.PermissionsAndConsent) { <PermissionExplainer/> }
 @{ var groups=InstructionGroups.Create(Step,Plan); }
 @for(var index=0;index<groups.Length;index++) { var key=Plan.Id+":"+Step.Id+":"+index; <InstructionGroupPanel @key="key" Group="groups[index]" Number="@(index+1)" GroupKey="@key"/> }
 @if(!string.IsNullOrWhiteSpace(Step.ExpectedResult)) { <ExpectedResult Text="@Step.ExpectedResult" Label="@(Step.Section==GuideSection.TestAndTroubleshoot ? "Expected output" : "Expected result")"/> }

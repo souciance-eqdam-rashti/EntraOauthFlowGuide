@@ -68,7 +68,7 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
                 var audience = plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.SingleTenant
                     ? "Accounts in this organizational directory only" : "Accounts in any organizational directory";
                 content.Add(new ConfigurationRowsContent("Enter these values in the Entra form", ["Entra ID", "App registrations", "New registration"], [
-                    new(component.Id + ".name", "Name", component.Name, GuideValueKind.Derived, "") { IsTechnical = false, CanCopy = false, CopyInForm = true },
+                    new(component.Id + ".name", "Name", "<name of your " + component.Name.ToLowerInvariant() + ">", GuideValueKind.DeveloperSupplied, "") { IsTechnical = false, CanCopy = false },
                     new(component.Id + ".accountTypes", "Supported account types", audience, GuideValueKind.Derived, "") { IsTechnical = false, CanCopy = false }
                 ], "Then select `Register` in Entra.") { Introduction = "On the New registration page, configure the following fields." });
                 if (decision.SignIn != SignInApproach.None)
@@ -97,9 +97,9 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             var choice = userAccess && appAccess
                 ? "Use both: scopes limit calls made for a signed-in user; app roles permit calls made by an application without a user. This API accepts both identities."
                 : userAccess
-                    ? "Use scopes: callers access this API on behalf of the signed-in user. Define scopes to control which operations they can perform. Application permissions are not needed for this scenario."
+                    ? "This caller acts for a signed-in user. Define delegated permissions (scopes) for the operations it needs. Application permissions are not needed here."
                     : "Use app roles: they describe what an application may do without a signed-in user. This API receives application calls, so delegated scopes are not needed for this scenario.";
-            var content = new List<GuideContent> { Text(choice, userAccess && appAccess ? "Use delegated and application permissions" : userAccess ? "Use delegated permissions" : "Use application permissions") };
+            var content = new List<GuideContent> { new InstructionContent(choice) { Title = userAccess && appAccess ? "Use delegated and application permissions" : userAccess ? "Use delegated permissions" : "Use application permissions", GroupSystem="Decision", GroupLocation=[name, "Selected access model"] } };
             if (userAccess) content.Add(new ConfigurationRowsContent("Configure the API identifier and scope", ["App registrations", name, "Expose an API"], [
                 new(validation.ComponentId + ".applicationIdUri", "Application ID URI", "api://<backend-client-id>", GuideValueKind.DeveloperSupplied, "Replace <backend-client-id> with this API registration’s client ID."),
                 new(validation.ComponentId + ".scope", "Scope name", "Orders.Read", GuideValueKind.Sample, "Example only; no scope has been selected by this guide. Choose the operation your API will enforce, e.g. Orders.Read or Orders.Write."),
@@ -122,11 +122,15 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             else if (hop.Credential == CredentialMechanism.ManagedIdentity)
                 content.Add(Text("Assign the target’s application role to the managed identity’s service principal in the resource tenant. Managed identity has no caller app registration; use an authorized administrator and the provider’s assignment procedure."));
             else
-                content.Add(Portal($"On {caller}, select {resource.Name} → {(hop.Identity == ActingIdentity.DelegatedUser ? "Delegated permissions: choose the target scope (for example Orders.Read for a custom API or User.Read for Graph) because this call acts for a user" : "Application permissions: choose the target app role (for example Orders.Read.All for a custom API or User.Read.All for Graph) because this call has no user")}. Choose only permissions this caller needs.", "Caller app registration", "API permissions", "Add a permission"));
+                content.Add(new ConfigurationRowsContent("Add the caller’s permission", ["App registrations", caller, "API permissions", "Add a permission"], [
+                    new(hop.RelationshipId+".target", "Target API", resource.Name, GuideValueKind.Derived, "") { IsTechnical=false,CanCopy=false },
+                    new(hop.RelationshipId+".type", "Permission type", hop.Identity == ActingIdentity.DelegatedUser ? "Delegated permissions" : "Application permissions", GuideValueKind.Derived, "") { IsTechnical=false,CanCopy=false },
+                    new(hop.RelationshipId+".permission", "Permission", "<permission required by your operation>", GuideValueKind.DeveloperSupplied, "Choose only the scope or app role this caller needs.") { IsTechnical=false,CanCopy=false }
+                ], "Select `Add permissions` in Entra."));
             if (resource.Category.Value != ResourceCategory.AzureResource && hop.Credential != CredentialMechanism.ManagedIdentity)
                 content.Add(hop.Identity == ActingIdentity.Application
-                    ? Portal("Have an administrator select Grant admin consent for this tenant. Application permissions always require admin consent.", "Caller app registration", "API permissions")
-                    : Portal("Check Admin consent required for the selected scopes. If Yes, or tenant policy blocks user consent, have an administrator select Grant admin consent for this tenant. Otherwise users can consent at sign-in; admin consent can also cover all users.", "Caller app registration", "API permissions"));
+                    ? Portal("Have an administrator select Grant admin consent for this tenant. Application permissions always require admin consent.", "App registrations", caller, "API permissions")
+                    : Portal("Check `Admin consent required`. If Yes, or tenant policy blocks user consent: an administrator selects `Grant admin consent` for this tenant. Otherwise: the user can consent at sign-in; an administrator can also consent for all users.", "App registrations", caller, "API permissions"));
             if (relationship.TenantBoundary.Value == TenantBoundary.CrossTenant)
                 content.AddRange([Text("Provision the caller’s service principal and consent/assignments in the resource tenant. Home-tenant consent is not sufficient.", "Authorize the caller in the resource tenant"), Text("Verify cross-tenant support and acquire the token in the resource tenant.", "Use the resource tenant")]);
             Add("permission-" + hop.RelationshipId, GuideSection.PermissionsAndConsent, "Allow " + caller + " to call " + resource.Name,

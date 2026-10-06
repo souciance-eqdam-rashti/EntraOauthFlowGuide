@@ -1,11 +1,9 @@
-@inject IJSRuntime JS
+
 <table class="entra-field-table"><thead><tr><th scope="col">@FieldHeading</th><th scope="col">@ValueHeading</th></tr></thead><tbody>
-@foreach(var value in Values) { <tr><th scope="row">@value.Label</th><td><div class="form-value"><span class="@(value.IsTechnical ? "technical-setting" : "ordinary-setting")">@value.Value</span>@if(value.CopyInForm) { <MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" Size="Size.Small" OnClick="() => Copy(value)" aria-label="@($"Copy {value.Label}: {value.Value}")" /> }</div>@if(value.Kind != GuideValueKind.Derived) { <span class="form-value-kind">@(value.Kind == GuideValueKind.Sample ? "Example — choose for your application" : "Placeholder — replace with your Entra value")</span> }@if(!string.IsNullOrWhiteSpace(value.Guidance)) { <p>@value.Guidance</p> }</td></tr> }
-</tbody></table><span role="status" aria-live="polite" class="form-copy-status">@feedback</span>
+@foreach(var value in Values) { <tr><th scope="row">@value.Label</th><td><div class="form-value"><span class="@(value.IsTechnical ? "technical-setting" : "ordinary-setting")">@value.Value</span></div>@if(value.Kind != GuideValueKind.Derived) { <span class="form-value-kind">@(value.Kind == GuideValueKind.Sample ? "Example — choose for your application" : "Placeholder — replace with your Entra value")</span> }@if(!string.IsNullOrWhiteSpace(value.Guidance)) { <p>@value.Guidance</p> }</td></tr> }
+</tbody></table>
 @code {
  [Parameter] public string FieldHeading {get;set;}="Entra field";
  [Parameter] public string ValueHeading {get;set;}="Value to enter or select";
  [Parameter,EditorRequired] public IReadOnlyList<GuideValue> Values {get;set;}=Array.Empty<GuideValue>();
- private string feedback="";
- private async Task Copy(GuideValue value) { try { await JS.InvokeVoidAsync("advisor.copy",value.Value); feedback=value.Label+" copied."; } catch(JSException) { feedback="Copy unavailable. Select the value to copy it."; } }
 }
