@@ -18,4 +18,6 @@ $index = [IO.File]::ReadAllText($indexPath).Replace('<base href="/" />', ('<base
 # GitHub Pages uses 404.html for direct client routes; assets keep the configured base.
 [IO.File]::WriteAllText((Join-Path $webRoot '404.html'), $index)
 [IO.File]::WriteAllText((Join-Path $webRoot '.nojekyll'), '')
+# Preserve exact asset bytes: line-ending conversion invalidates generated integrity hashes.
+[IO.File]::WriteAllText((Join-Path $webRoot '.gitattributes'), "* -text`n")
 Write-Output "Deploy the contents of $webRoot"
