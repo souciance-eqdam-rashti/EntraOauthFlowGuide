@@ -20,6 +20,7 @@ public sealed class MarkdownGuideExporter : IGuideExporter
                 case CopyableValueContent v: b.AppendLine($"**{v.Value.Label}**: `{v.Value.Value}`\n\n{v.Value.Guidance}\n"); break;
                 case ConfigurationRowsContent rows:
                     b.AppendLine($"**{rows.Title}**\n\nOpen in Entra: {string.Join(" → ", rows.Breadcrumbs)}\n");
+                    if(!string.IsNullOrEmpty(rows.Introduction)) b.AppendLine(rows.Introduction+"\n");
                     foreach(var value in rows.Values) b.AppendLine($"**{value.Label}** ({value.Kind}): {(value.IsTechnical ? "`"+value.Value+"`" : value.Value)}\n\n{value.Guidance}\n");
                     b.AppendLine(rows.Instruction+"\n"); break;
                 case CodeContent code: if(code.Artifact.ExecutionLocation is not null) b.AppendLine("Execution location: "+code.Artifact.ExecutionLocation+"\n"); var fence=new string('`',Math.Max(3,LongestRun(code.Artifact.Content)+1)); b.AppendLine($"### {code.Artifact.DestinationFile}\n\n{fence}{code.Artifact.Language}\n{code.Artifact.Content}\n{fence}\n"); break;

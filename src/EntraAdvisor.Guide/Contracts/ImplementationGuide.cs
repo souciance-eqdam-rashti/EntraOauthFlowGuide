@@ -14,6 +14,7 @@ public enum GuideValueKind { DeveloperSupplied, Sample, Derived }
 public sealed record GuideVersions(string Schema, string Rules, string Templates);
 public sealed record GuideValue(string Key, string Label, string Value, GuideValueKind Kind, string Guidance)
 {
+    public bool CopyInForm { get; init; }
     public bool ReferenceOnly { get; init; }
     public bool IsTechnical { get; init; } = true;
     public bool CanCopy { get; init; } = true;
@@ -27,7 +28,7 @@ public abstract record GuideContent;
 public sealed record InstructionContent(string Text) : GuideContent { public string Title { get; init; } = ""; public ImmutableArray<string> Location { get; init; } = []; public string LocationLabel { get; init; } = "Application configuration"; }
 public sealed record PortalActionContent(ImmutableArray<string> Breadcrumbs, string Action) : GuideContent { public string Title { get; init; } = "Configure in Entra"; }
 public sealed record CopyableValueContent(GuideValue Value) : GuideContent;
-public sealed record ConfigurationRowsContent(string Title, ImmutableArray<string> Breadcrumbs, ImmutableArray<GuideValue> Values, string Instruction) : GuideContent;
+public sealed record ConfigurationRowsContent(string Title, ImmutableArray<string> Breadcrumbs, ImmutableArray<GuideValue> Values, string Instruction) : GuideContent { public string Introduction { get; init; } = ""; }
 public sealed record CodeContent(CodeArtifact Artifact) : GuideContent;
 public sealed record ExplanationContent(string Title, string Text) : GuideContent;
 

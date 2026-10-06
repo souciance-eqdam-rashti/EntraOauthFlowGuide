@@ -30,7 +30,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
 
  </section>
  <MudPaper Outlined="true" Elevation="0" Class="implementation-step-pane" role="region" aria-label="Selected implementation step" id="implementation-step-pane">
- <article><div class="step-header-meta"><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p>@if(W.Completion[W.ActiveStep].State == CompletionState.Complete) { <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Complete</MudChip> }</div><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId" ShowLinks="false"/> }
+ <article><div class="step-header-meta"><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p>@if(W.Completion[W.ActiveStep].State == CompletionState.Complete) { <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Complete</MudChip> }</div><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites && !step.Id.StartsWith("register")) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId" ShowLinks="false"/> }
  <CompactStepContent Step="step" Plan="guide.Architecture"/>
 
  <StepResources Step="step" Plan="guide.Architecture" />

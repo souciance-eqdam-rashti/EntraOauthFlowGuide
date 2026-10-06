@@ -41,7 +41,9 @@ public sealed class GuideAccessCopyTests
         var registration=guide.Steps.Single(s=>s.Id=="register-api");
         var fields=registration.Content.OfType<ConfigurationRowsContent>().First();
         Assert.All(fields.Values,v=> { Assert.False(v.IsTechnical); Assert.False(v.CanCopy); });
-        Assert.Equal("Select Register.",fields.Instruction);
+        Assert.Equal("Then select `Register` in Entra.",fields.Instruction);
+        Assert.True(fields.Values.Single(v=>v.Label=="Name").CopyInForm);
+        Assert.False(fields.Values.Single(v=>v.Label=="Supported account types").CopyInForm);
         Assert.DoesNotContain(access.Content,c=>c is CopyableValueContent);
         Assert.DoesNotContain(access.Content.OfType<InstructionContent>(),c=>c.Text.Contains("Record the API"));
     }

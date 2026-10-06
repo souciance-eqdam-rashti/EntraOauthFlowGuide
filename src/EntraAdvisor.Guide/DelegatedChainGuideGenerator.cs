@@ -50,11 +50,11 @@ public sealed class DelegatedChainGuideGenerator : IGuideGenerator
         Add("prerequisites",GuideSection.Prerequisites,"Prepare your Entra tenant",web,"Verify access before creating three new registrations.","Tenant access and administrator support are available.",
             Text(TenantPreparation.Roles(validatedPlan)));
         foreach(var entry in new[] {(Id:apiB,Label:validatedPlan.Scenario.Components.Single(c=>c.Id==apiB).Name,Placeholder:"__API_B_CLIENT_ID__",Scope:"__API_B_SCOPE__"),(Id:apiA,Label:validatedPlan.Scenario.Components.Single(c=>c.Id==apiA).Name,Placeholder:"__API_A_CLIENT_ID__",Scope:"__API_A_SCOPE__")})
-            Add("register-"+entry.Id,GuideSection.ResourceRegistration,"Register application for "+entry.Label,entry.Id,"Create a single-tenant API registration and define its delegated scope.","A new registration exposes one enabled delegated scope and requests v2 access tokens.",
-                new ConfigurationRowsContent("Create the registration", ["Entra ID","App registrations","New registration"], [
-                    new(entry.Id+".name","Name",entry.Label,GuideValueKind.Derived,"") { IsTechnical=false,CanCopy=false },
+            Add("register-"+entry.Id,GuideSection.ResourceRegistration,"Register "+entry.Label+" in Entra",entry.Id,"Create a single-tenant API registration and define its delegated scope.","A new registration exposes one enabled delegated scope and requests v2 access tokens.",
+                new ConfigurationRowsContent("Enter these values in the Entra form", ["Entra ID","App registrations","New registration"], [
+                    new(entry.Id+".name","Name",entry.Label,GuideValueKind.Derived,"") { IsTechnical=false,CanCopy=false,CopyInForm=true },
                     new(entry.Id+".accountTypes","Supported account types","Accounts in this organizational directory only",GuideValueKind.Derived,"") { IsTechnical=false,CanCopy=false }
-                ], "Select Register. No redirect URI is needed."),
+                ], "Then select `Register` in Entra. No redirect URI is needed.") { Introduction = "On the New registration page, configure the following fields." },
                 Text("Use scopes: this API is called for a signed-in user. A scope describes an allowed operation; application permissions are not needed for this delegated chain."),
                 Portal("Set Application ID URI to api://<api-client-id>; enable a scope such as Orders.Read with Admins only consent and its display name/description.","App registration","Expose an API"),
                 Portal("Set api.requestedAccessTokenVersion to 2; preserve all other manifest fields.","App registration","Manifest"),

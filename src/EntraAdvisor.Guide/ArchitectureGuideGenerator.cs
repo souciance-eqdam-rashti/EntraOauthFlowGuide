@@ -67,10 +67,10 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             {
                 var audience = plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.SingleTenant
                     ? "Accounts in this organizational directory only" : "Accounts in any organizational directory";
-                content.Add(new ConfigurationRowsContent("Create the registration", ["Entra ID", "App registrations", "New registration"], [
-                    new(component.Id + ".name", "Name", component.Name, GuideValueKind.Derived, "") { IsTechnical = false, CanCopy = false },
+                content.Add(new ConfigurationRowsContent("Enter these values in the Entra form", ["Entra ID", "App registrations", "New registration"], [
+                    new(component.Id + ".name", "Name", component.Name, GuideValueKind.Derived, "") { IsTechnical = false, CanCopy = false, CopyInForm = true },
                     new(component.Id + ".accountTypes", "Supported account types", audience, GuideValueKind.Derived, "") { IsTechnical = false, CanCopy = false }
-                ], "Select Register."));
+                ], "Then select `Register` in Entra.") { Introduction = "On the New registration page, configure the following fields." });
                 if (decision.SignIn != SignInApproach.None)
                 {
                     var platform = component.Stack.Value switch {
@@ -86,8 +86,8 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
                     content.Add(Portal("Add a federated credential matching the workload provider’s issuer, subject and audience; obtain assertions from that provider.", "App registration", "Certificates & secrets", "Federated credentials"));
             }
             else content.Add(Text("Use the host-provided managed identity: enable it on the Azure host and record its principal ID. No app registration or credential upload is needed."));
-            Add("register-" + component.Id, GuideSection.ClientRegistration, "Register application for " + component.Name, component.Id,
-                "Create the application identity and configure the platform or host identity.", registration.CreateRegistration ? $"{component.Name} appears on its Overview page with the required platform or credential settings." : "The host-provided managed identity is enabled and its principal ID is recorded.", content, [register, Source("Platform registration guidance", PlatformUrl(component.Stack.Value))]);
+            Add("register-" + component.Id, GuideSection.ClientRegistration, "Register " + component.Name + " in Entra", component.Id,
+                "Create the application identity and configure the platform or host identity.", registration.CreateRegistration ? $"The {component.Name} Overview page opens. Note the Application (client) ID for later steps." : "The host-provided managed identity is enabled and its principal ID is recorded.", content, [register, Source("Platform registration guidance", PlatformUrl(component.Stack.Value))]);
         }
         foreach (var validation in plan.ApiValidation)
         {

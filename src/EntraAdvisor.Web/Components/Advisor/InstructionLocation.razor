@@ -1,9 +1,10 @@
-<div class="instruction-location">
- <MudIcon Icon="@Icons.Material.Outlined.Place" Size="Size.Small" aria-hidden="true" />
- <div><MudText Typo="Typo.subtitle2" Class="location-label">@Label</MudText>
+<div class="instruction-location system-context">
+ @if(IsEntra) { <svg class="entra-system-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 2 12l6 6 4-4-3-3 3-3 7 7 3-3z"/><path fill="currentColor" opacity=".65" d="m12 14-4 4 4 4 7-7-4-4z"/></svg> } else { <MudIcon Icon="@(Label.Contains("execution",StringComparison.OrdinalIgnoreCase) ? Icons.Material.Outlined.Terminal : Icons.Material.Outlined.Code)" Size="Size.Small" aria-hidden="true" /> }
+ <div><MudText Typo="Typo.subtitle2" Class="location-label">@(IsEntra ? "Microsoft Entra admin center" : Label)</MudText>
  <p class="location-path">@for(var i=0;i<Path.Count;i++) { if(i>0) { <span class="path-chevron" aria-hidden="true">›</span> } <span class="@(i == Path.Count-1 ? "destination" : "")">@Path[i]</span> }</p></div>
 </div>
 @code {
+ private bool IsEntra => Label == "Open in Entra";
  [Parameter] public string Label {get;set;}="Open in Entra";
  [Parameter,EditorRequired] public IReadOnlyList<string> Path {get;set;}=Array.Empty<string>();
 }

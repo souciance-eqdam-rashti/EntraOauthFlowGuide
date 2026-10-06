@@ -5,7 +5,7 @@
    @foreach(var value in group.Cast<CopyableValueContent>()) { <ImplementationAction Title="@value.Value.Label" Path="@(new[] { "App registrations", ComponentName, "Overview" })"><p>@value.Value.Guidance</p></ImplementationAction> }
    break;
   case CopyableValueContent:
-   <ImplementationAction Title="Configure settings"><div class="configuration-rows">@foreach(var value in group.Cast<CopyableValueContent>()) { <ConfigurationValueRow Value="value.Value" /> }</div></ImplementationAction>
+   <ImplementationAction Title="Configure application settings" Path="@(new[] { ComponentName, "Authentication configuration" })" PathLabel="Application configuration"><ConfigurationTable Values="@(group.Cast<CopyableValueContent>().Select(v=>v.Value).ToArray())" FieldHeading="Application setting" ValueHeading="Value to configure"/></ImplementationAction>
    break;
   case PortalActionContent portal:
    <ImplementationAction Title="@portal.Title" Path="@PortalPath(portal.Breadcrumbs)"><p>@portal.Action</p></ImplementationAction>
@@ -14,10 +14,10 @@
    <ImplementationAction Title="@GroupTitle(group)" Path="@InstructionPath(group[0])" PathLabel="@((group[0] as InstructionContent)!.LocationLabel)">@foreach(var instruction in group.Cast<InstructionContent>()) { <InstructionText Text="@instruction.Text"/> }</ImplementationAction>
    break;
   case ConfigurationRowsContent rows:
-   <ImplementationAction Title="@rows.Title" Path="@PortalPath(rows.Breadcrumbs)"><div class="configuration-rows">@foreach(var value in rows.Values) { <ConfigurationValueRow Value="value" /> }</div><p>@rows.Instruction</p></ImplementationAction>
+   <ImplementationAction Title="@rows.Title" Path="@PortalPath(rows.Breadcrumbs)">@if(!string.IsNullOrEmpty(rows.Introduction)) { <p>@rows.Introduction</p> }<ConfigurationTable Values="rows.Values"/><div class="portal-final-action"><InstructionText Text="@rows.Instruction"/></div></ImplementationAction>
    break;
   case CodeContent snippet:
-   <ImplementationAction Title="@(snippet.Artifact.ExecutionLocation is not null ? "Run the commands" : "Apply the code")" Path="@(new[] { snippet.Artifact.ExecutionLocation ?? snippet.Artifact.DestinationFile })" PathLabel="@(snippet.Artifact.ExecutionLocation is null ? "File location" : "Execution location")"><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre></ImplementationAction>
+   <ImplementationAction Title="@(snippet.Artifact.ExecutionLocation is not null ? "Run the commands" : "Apply the code")" Path="@(new[] { snippet.Artifact.ExecutionLocation ?? snippet.Artifact.DestinationFile })" PathLabel="@(snippet.Artifact.ExecutionLocation is null ? ".NET application · file location" : "PowerShell · execution location")"><pre><code>@((MarkupString)CodeHighlighter.Render(snippet.Artifact.Content))</code></pre></ImplementationAction>
    break;
   case ExplanationContent explanation:
    <MudExpansionPanels Elevation="0" Class="quiet-disclosures"><MudExpansionPanel Text="Why this setting?"><MudText Typo="Typo.subtitle2">@explanation.Title</MudText><p>@explanation.Text</p></MudExpansionPanel></MudExpansionPanels>
