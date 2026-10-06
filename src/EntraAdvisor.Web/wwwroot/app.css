@@ -86,3 +86,13 @@ header.advisor-appbar,body:has(main.implement-page)>header.advisor-appbar{paddin
 .implement-page .implementation-step-pane{flex:1 1 0;width:100%;height:auto;min-height:0}
 .implementation-stepper .mud-stepper-nav{align-items:stretch}.implementation-stepper .mud-step{width:100%}.implementation-stepper .mud-step-label{justify-content:flex-start}
 .implementation-stepper .mud-step-label-content{flex:1;text-align:left}
+
+/* Single horizontal row above the instructions; scroll when space is limited. */
+.implement-page .implementation-step-selector{max-height:none;overflow:visible}
+.implementation-stepper .mud-stepper-nav{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;overflow-x:auto;padding:6px 0 10px}
+.implementation-stepper .mud-step{flex:0 0 auto;width:auto!important}
+.implementation-stepper .mud-step-label{white-space:nowrap;min-height:40px!important;padding:6px 10px!important}
+.implementation-stepper .mud-step-label-content-title{white-space:nowrap}
+.implementation-stepper .mud-stepper-nav-connector{flex:0 0 20px;min-width:20px;height:1px;min-height:1px;margin:0}
+.implementation-stepper .mud-stepper-nav-connector-line{height:1px;min-height:1px;width:100%}
+

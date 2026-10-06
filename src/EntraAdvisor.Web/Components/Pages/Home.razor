@@ -23,7 +23,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  <div class="implementation-layout">
  <section class="implementation-step-selector" aria-label="Implementation steps">
  <MudText Typo="Typo.overline" Class="stepper-heading">IMPLEMENTATION JOURNEY</MudText>
- <MudStepper @key="guide.PlanId" Vertical="true" NonLinear="true" ScrollableNavigation="false" ActiveIndex="W.ActiveStep" ActiveIndexChanged="SelectStep" Class="implementation-stepper">
+ <MudStepper @key="guide.PlanId" Vertical="false" NonLinear="true" ScrollableNavigation="true" ActiveIndex="W.ActiveStep" ActiveIndexChanged="SelectStep" Class="implementation-stepper">
  <ChildContent>@foreach(var item in guide.Steps) { <MudStep Title="@item.Title" /> }</ChildContent>
  <ActionContent></ActionContent>
  </MudStepper>
