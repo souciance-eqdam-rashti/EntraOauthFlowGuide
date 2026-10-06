@@ -42,17 +42,17 @@ public sealed class DelegatedChainGuideGenerator : IGuideGenerator
         var steps = new List<GuideStep>();
         void Add(string id, GuideSection section, string title, string component, string action, string expected, params GuideContent[] content) => steps.Add(new() {
             Id=id, Section=section, Title=title, ComponentId=component, Purpose=action, Action=action, ExpectedResult=expected,
-            DependsOnStepIds=steps.Count == 0 ? [] : [steps[^1].Id], RelatedRelationshipIds=[first.RelationshipId,second.RelationshipId], Content=content.Select(c => c is CodeContent code && code.Artifact.Id is "certs" or "run" ? new CodeContent(code.Artifact with { ExecutionLocation = code.Artifact.Id == "certs" ? "Local PowerShell terminal · account running the samples" : "Local terminal · common sample directory" }) : c).ToImmutableArray(), Sources=SourcesFor(section,sources)
+            DependsOnStepIds=steps.Count == 0 ? [] : [steps[^1].Id], RelatedRelationshipIds=[first.RelationshipId,second.RelationshipId], Content=content.Select(c => c is CodeContent code && code.Artifact.Id is "certs" or "run" ? new CodeContent(code.Artifact with { ExecutionLocation = code.Artifact.Id == "certs" ? "Local PowerShell terminal · account running the samples" : "Local terminal · common sample directory" }) : c is InstructionContent instruction && section==GuideSection.AuthenticationAndAuthorization ? instruction with { GroupTitle="Protect authentication and API access",GroupSystem="Code",GroupLocation=[validatedPlan.Scenario.Components.Single(x=>x.Id==component).Name,"Program.cs + appsettings.json"] } : c).ToImmutableArray(), Sources=SourcesFor(section,sources)
         });
         GuideContent Text(string s,string title="") => new InstructionContent(s) { Title=title };
         GuideContent Portal(string action, params string[] path) => new PortalActionContent(path.ToImmutableArray(),action);
-        GuideContent Value(string key,string label,string value,string guidance,bool referenceOnly=false) => new CopyableValueContent(new(key,label,value,GuideValueKind.DeveloperSupplied,guidance) { ReferenceOnly=referenceOnly,CanCopy=!referenceOnly });
+        GuideContent Value(string key,string label,string value,string guidance,bool referenceOnly=false) => new CopyableValueContent(new(key,label,value,GuideValueKind.DeveloperSupplied,guidance) { ReferenceOnly=referenceOnly,CanCopy=false });
         Add("prerequisites",GuideSection.Prerequisites,"Prepare your Entra tenant",web,"Verify access before creating three new registrations.","Tenant access and administrator support are available.",
             Text(TenantPreparation.Roles(validatedPlan)));
         foreach(var entry in new[] {(Id:apiB,Label:validatedPlan.Scenario.Components.Single(c=>c.Id==apiB).Name,Placeholder:"__API_B_CLIENT_ID__",Scope:"__API_B_SCOPE__"),(Id:apiA,Label:validatedPlan.Scenario.Components.Single(c=>c.Id==apiA).Name,Placeholder:"__API_A_CLIENT_ID__",Scope:"__API_A_SCOPE__")})
             Add("register-"+entry.Id,GuideSection.ResourceRegistration,"Register "+entry.Label+" in Entra",entry.Id,"Create a single-tenant API registration and define its delegated scope.","A new registration exposes one enabled delegated scope and requests v2 access tokens.",
                 new ConfigurationRowsContent("Enter these values in the Entra form", ["Entra ID","App registrations","New registration"], [
-                    new(entry.Id+".name","Name",entry.Label,GuideValueKind.Derived,"") { IsTechnical=false,CanCopy=false,CopyInForm=true },
+                    new(entry.Id+".name","Name","<name of your "+entry.Label.ToLowerInvariant()+">",GuideValueKind.DeveloperSupplied,"") { IsTechnical=false,CanCopy=false },
                     new(entry.Id+".accountTypes","Supported account types","Accounts in this organizational directory only",GuideValueKind.Derived,"") { IsTechnical=false,CanCopy=false }
                 ], "Then select `Register` in Entra. No redirect URI is needed.") { Introduction = "On the New registration page, configure the following fields." },
                 Text("Use scopes: this API is called for a signed-in user. A scope describes an allowed operation; application permissions are not needed for this delegated chain."),
@@ -60,7 +60,11 @@ public sealed class DelegatedChainGuideGenerator : IGuideGenerator
                 Portal("Set api.requestedAccessTokenVersion to 2; preserve all other manifest fields.","App registration","Manifest"),
                 new CodeContent(new("manifest-"+entry.Id,entry.Id,"json","Manifest fragment (merge only)","{\n  \"api\": {\n    \"requestedAccessTokenVersion\": 2\n  }\n}")));
         Add("register-web",GuideSection.ClientRegistration,"Register the server web app",web,"Create a confidential single-tenant Web registration.","Web redirect and logout callbacks match the local host.",
-            Portal("New registration → Accounts in this organizational directory only. Authentication → Add a platform → Web → add redirect URIs https://localhost:7300/signin-oidc and https://localhost:7300/signout-callback-oidc. Set front-channel logout URL to https://localhost:7300/signout-oidc. Keep implicit grants and public client flows disabled.","Entra admin center","Identity","Applications","App registrations"));
+            new ConfigurationRowsContent("Enter these values in the Entra form",["App registrations","New registration"],[
+                new(web+".name","Name","<name of your server web app>",GuideValueKind.DeveloperSupplied,"") { IsTechnical=false,CanCopy=false },
+                new(web+".accountTypes","Supported account types","Accounts in this organizational directory only",GuideValueKind.Derived,"") { IsTechnical=false,CanCopy=false }
+            ],"Then select `Register` in Entra."),
+            Portal("Add the Web platform. Redirect URIs: https://localhost:7300/signin-oidc and https://localhost:7300/signout-callback-oidc. Front-channel logout URL: https://localhost:7300/signout-oidc. Keep implicit grants and public client flows disabled.","App registrations",validatedPlan.Scenario.Components.Single(c=>c.Id==web).Name,"Authentication"));
         Add("certificates",GuideSection.ClientRegistration,"Create and upload two development certificates",web,"Use distinct certificates for Web and API A, both of which acquire tokens.","Each public certificate is uploaded to its owning registration; private keys remain in the Windows certificate store.",
             Text("Use CurrentUser/My under the account that runs the samples. These signing certificates are separate from the HTTPS development certificate."),
             Text("Run the following locally under the account that will run the sample. Replace `__WEB_CERT_THUMBPRINT__` and `__API_A_CERT_THUMBPRINT__` with the displayed values.", "Record the certificate thumbprints"),
@@ -77,7 +81,7 @@ public sealed class DelegatedChainGuideGenerator : IGuideGenerator
         Add("projects",GuideSection.Dependencies,"Create the three projects",web,"Create empty directories Web, ApiA and ApiB and copy the project files.","Pinned Microsoft.Identity.Web 4.16.0 dependencies restore successfully.",artifacts.Where(a=>a.DestinationFile.EndsWith(".csproj",StringComparison.Ordinal)).Select(a=>(GuideContent)new CodeContent(a)).Prepend(Text("Use the supplied complete project files. Paths are relative to one common sample directory. Create every parent directory shown.", "Create the project directories")).Prepend(Text("Install .NET SDK 10.0.400 or a compatible .NET 10 SDK. Trust the local HTTPS certificate with `dotnet dev-certs https --trust`.", "Prepare the local SDK and HTTPS")).ToArray());
         foreach(var component in new[]{web,apiA,apiB}) {
             var content=new List<GuideContent>();
-            content.Add(Value(component+".clientId","Configure client and tenant IDs","__CLIENT_ID__","Set this app’s Application (client) ID and Directory (tenant) ID from its registration’s Overview page in the authentication configuration.", true));
+            content.Add(Value(component+".clientId","Configure client and tenant IDs","__CLIENT_ID__","From Overview, note this registration’s Application (client) ID and Directory (tenant) ID. Enter them in the settings files below.", true));
             if(component==web) {
                 content.Add(Text("Configure server sign-in and request the backend’s delegated scope.", "Configure server sign-in"));
                 content.Add(Text("Keep the certificate private key on the server.", "Protect the signing credential"));

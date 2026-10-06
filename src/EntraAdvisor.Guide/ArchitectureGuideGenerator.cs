@@ -85,8 +85,8 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
                 if (decision.Credential == CredentialMechanism.WorkloadFederation)
                     content.Add(Portal("Add a federated credential matching the workload provider’s issuer, subject and audience; obtain assertions from that provider.", "App registration", "Certificates & secrets", "Federated credentials"));
             }
-            else content.Add(Text("Use the host-provided managed identity: enable it on the Azure host and record its principal ID. No app registration or credential upload is needed."));
-            Add("register-" + component.Id, GuideSection.ClientRegistration, "Register " + component.Name + " in Entra", component.Id,
+            else content.Add(new InstructionContent("Enable the selected managed identity on the Azure host and note its principal ID. Managed identity has no caller app registration or credential upload.") { Title="Enable the host identity",GroupSystem="Azure",GroupLocation=[component.Name,"Azure host · Identity"] });
+            Add("register-" + component.Id, GuideSection.ClientRegistration, registration.CreateRegistration ? "Register " + component.Name + " in Entra" : "Enable managed identity for " + component.Name, component.Id,
                 "Create the application identity and configure the platform or host identity.", registration.CreateRegistration ? $"The {component.Name} Overview page opens. Note the Application (client) ID for later steps." : "The host-provided managed identity is enabled and its principal ID is recorded.", content, [register, Source("Platform registration guidance", PlatformUrl(component.Stack.Value))]);
         }
         foreach (var validation in plan.ApiValidation)
@@ -117,10 +117,10 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
             var content = new List<GuideContent>();
             if (resource.Category.Value == ResourceCategory.AzureResource)
                 content.AddRange([
-                    Text("Assign the resource’s documented data-access role to the caller at the resource scope—for example, Storage Blob Data Reader for blob reads. A management role alone may not grant data access.", "Assign data access"),
-                    Text("Use that resource’s audience and supported identity mode.", "Match the resource audience")]);
+                    new InstructionContent("Assign the resource’s documented data-access role to the caller at the resource scope. Example: Storage Blob Data Reader for blob reads. A management role alone may not grant data access.") { Title="Assign data access",GroupSystem="Azure",GroupTitle="Grant resource access",GroupLocation=[resource.Name,"Access control (IAM)"] },
+                    new InstructionContent("Use this resource’s audience and supported identity mode.") { Title="Match the resource audience",GroupSystem="Azure",GroupTitle="Grant resource access",GroupLocation=[resource.Name,"Access control (IAM)"] }]);
             else if (hop.Credential == CredentialMechanism.ManagedIdentity)
-                content.Add(Text("Assign the target’s application role to the managed identity’s service principal in the resource tenant. Managed identity has no caller app registration; use an authorized administrator and the provider’s assignment procedure."));
+                content.Add(new InstructionContent("An administrator assigns the target application role to the managed identity’s service principal in the resource tenant. Use the resource provider’s assignment procedure; this identity has no caller app registration.") { Title="Assign the application role",GroupSystem="Entra",GroupLocation=[resource.Name,"Service principal · app-role assignment"] });
             else
                 content.Add(new ConfigurationRowsContent("Add the caller’s permission", ["App registrations", caller, "API permissions", "Add a permission"], [
                     new(hop.RelationshipId+".target", "Target API", resource.Name, GuideValueKind.Derived, "") { IsTechnical=false,CanCopy=false },
@@ -180,9 +180,14 @@ public sealed class ArchitectureGuideGenerator : IGuideGenerator
                 }
             }
             if (outbound.Length > 0) content.Add(Text("Send the access token as `Authorization: Bearer`. Use the library’s token cache.", "Call the target API"));
-            var concreteBrowser = (component.Stack.Value == ImplementationStack.JavaScriptTypeScript || component.Stack.Value == ImplementationStack.BlazorWebAssembly) && decision.SignIn != SignInApproach.None && decision.SignIn != SignInApproach.DeviceCode && outbound.Length == 1 && outbound[0].Acquisition == TokenAcquisition.AuthorizationCode && plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.SingleTenant && !plan.Scenario.Tenants.IncludesGuestUsers.Value && plan.Scenario.Resources.Single(r=>r.Id==plan.Scenario.Relationships.Single(h=>h.Id==outbound[0].RelationshipId).TargetResourceId).Category.Value == ResourceCategory.CustomResource;
-            var targetName = concreteBrowser ? plan.Scenario.Resources.Single(r=>r.Id==plan.Scenario.Relationships.Single(h=>h.Id==outbound[0].RelationshipId).TargetResourceId).Name : "";
-            if(concreteBrowser) content=GenericBrowserConfigurationContent.Create(component.Id,component.Name,targetName);
+            var concreteBrowser = (component.Stack.Value == ImplementationStack.JavaScriptTypeScript || component.Stack.Value == ImplementationStack.BlazorWebAssembly) && decision.SignIn != SignInApproach.None && outbound.Length > 0 && outbound.All(h=>h.Acquisition==TokenAcquisition.AuthorizationCode);
+            var browserTargets = outbound.Select(h=>plan.Scenario.Resources.Single(r=>r.Id==plan.Scenario.Relationships.Single(link=>link.Id==h.RelationshipId).TargetResourceId)).ToArray();
+            var targetName = concreteBrowser ? string.Join(" and ",browserTargets.Select(r=>r.Name)) : "";
+            if(concreteBrowser) {
+                var additionalRequirements=content.OfType<InstructionContent>().Where(i=>i.Title is "Restrict organization access" or "Configure guest access").ToArray();
+                content=GenericBrowserConfigurationContent.Create(component.Id,component.Name,targetName,plan.Scenario.Tenants.Model.Value == WorkforceTenantModel.Multitenant,browserTargets.Select(r=>(r.Id,r.Name,r.Category.Value)).ToArray());
+                content.AddRange(additionalRequirements.Select(i=>i with { GroupTitle="Restrict tenant and guest access",GroupSystem="Code",GroupLocation=[component.Name,"Authentication configuration"] }));
+            }
             if(validation is not null && component.Stack.Value == ImplementationStack.AspNetCoreApi) {
                 content.Insert(1,new CodeContent(new("api-settings",component.Id,"json","appsettings.json", "{\n  \"AzureAd\": {\n    \"Instance\": \"https://login.microsoftonline.com/\",\n    \"TenantId\": \"<tenant-id>\",\n    \"ClientId\": \"<backend-api-client-id>\"\n  }\n}")) { GroupTitle="Configure ASP.NET Core authentication",GroupSystem="Code",GroupLocation=[component.Name,"appsettings.json"] });
                 content.Insert(2,new InstructionContent("Bind `AzureAd` with Microsoft.Identity.Web’s `AddMicrosoftIdentityWebApi`. In Program.cs, call `UseAuthentication()` before `UseAuthorization()` and protect API endpoints with authorization policies.") { Title="Wire authentication and authorization",GroupTitle="Protect the API endpoints",GroupSystem="Code",GroupLocation=[component.Name,"Program.cs"] });

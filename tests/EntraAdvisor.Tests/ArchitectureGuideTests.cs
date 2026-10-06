@@ -75,7 +75,7 @@ public sealed class ArchitectureGuideTests
         var plan=new ArchitectureEvaluator().Evaluate(ScenarioExamples.Worker(managed:true)).Plan!;
         var guide=new ArchitectureGuideGenerator().Generate(plan,new([]));
         var text=new MarkdownGuideExporter().ExportMarkdown(guide);
-        Assert.Contains("Use the host-provided managed identity",text);
+        Assert.Contains("Enable the selected managed identity",text);
         Assert.DoesNotContain("Create a new registration named",text);
         Assert.Contains("Managed identity has no caller app registration",text);
     }

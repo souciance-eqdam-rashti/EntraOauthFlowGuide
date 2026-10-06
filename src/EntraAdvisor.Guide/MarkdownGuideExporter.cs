@@ -5,7 +5,7 @@ public sealed class MarkdownGuideExporter : IGuideExporter
 {
     public string ExportMarkdown(ImplementationGuide guide)
     {
-        var b=new StringBuilder("# Entra delegated API chain implementation\n\n");
+        var b=new StringBuilder("# Entra OAuth implementation guide\n\n");
         b.AppendLine($"Plan: {guide.PlanId}\n\nVersions: schema {guide.Versions.Schema}, rules {guide.Versions.Rules}, templates {guide.Versions.Templates}\n");
         b.AppendLine("## Architecture\n");
         foreach(var c in guide.Architecture.Scenario.Components) b.AppendLine($"- {c.Name}: {c.Stack.Value}");

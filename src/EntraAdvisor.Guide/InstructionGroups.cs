@@ -14,7 +14,7 @@ public static class InstructionGroups {
     ConfigurationRowsContent v => (v.Title,"Entra",v.Breadcrumbs),
     CopyableValueContent v when v.Value.ReferenceOnly => ("Collect application identifiers","Entra",ImmutableArray.Create("App registrations",component,"Overview")),
     CopyableValueContent => ("Configure application settings","Code",ImmutableArray.Create(component,"Authentication configuration")),
-    CodeContent c => (c.Artifact.ExecutionLocation is null ? "Apply the code" : "Run the commands",c.Artifact.ExecutionLocation is null ? "Code" : "Terminal",ImmutableArray.Create(component,c.Artifact.ExecutionLocation ?? c.Artifact.DestinationFile)),
+    CodeContent c => (c.Artifact.ExecutionLocation is null ? "Apply the code" : "Run the commands",c.Artifact.ExecutionLocation is null ? "Code" : "Terminal",ImmutableArray.Create(plan.Scenario.Components.Single(cmp=>cmp.Id==c.Artifact.ComponentId).Name,c.Artifact.ExecutionLocation ?? c.Artifact.DestinationFile)),
     InstructionContent i => (string.IsNullOrEmpty(i.Title) ? step.Title : i.Title,step.Section==GuideSection.Prerequisites ? "Entra" : step.Section==GuideSection.TestAndTroubleshoot ? "Test" : "Code",i.Location.IsEmpty ? ImmutableArray.Create(component,step.Section==GuideSection.Prerequisites ? "Tenant access requirements" : "Implementation settings") : i.Location),
     _ => (step.Title,"Code",ImmutableArray.Create(component,"Implementation settings"))
    };

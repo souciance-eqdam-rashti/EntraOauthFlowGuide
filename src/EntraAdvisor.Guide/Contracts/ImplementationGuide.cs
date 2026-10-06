@@ -17,7 +17,7 @@ public sealed record GuideValue(string Key, string Label, string Value, GuideVal
     public bool CopyInForm { get; init; }
     public bool ReferenceOnly { get; init; }
     public bool IsTechnical { get; init; } = true;
-    public bool CanCopy { get; init; } = true;
+    public bool CanCopy { get; init; }
 }
 public sealed record ImplementationFacts(ImmutableArray<GuideValue> Values);
 public sealed record CodeArtifact(string Id, string ComponentId, string Language, string DestinationFile, string Content) { public string? ExecutionLocation { get; init; } }

@@ -19,6 +19,6 @@
  [Parameter,EditorRequired] public string GroupKey {get;set;}="";
 
 
- private string SystemLabel => Group.System switch { "Entra"=>"Microsoft Entra admin center", "Terminal"=>"Local terminal", "Test"=>"Test environment", "Decision"=>"Scenario", _=>"Application code" };
- private string Icon => Group.System switch { "Decision"=>Icons.Material.Outlined.AccountTree,"Api"=>Icons.Material.Outlined.Api,"Terminal"=>Icons.Material.Outlined.Terminal,"Test"=>Icons.Material.Outlined.Science,_=>Icons.Material.Outlined.Code };
+ private string SystemLabel => Group.System switch { "Entra"=>"Microsoft Entra admin center", "Azure"=>"Azure portal", "Terminal"=>"Local terminal", "Test"=>"Test environment", "Decision"=>"Scenario", _=>"Application code" };
+ private string Icon => Group.System switch { "Azure"=>Icons.Material.Outlined.Cloud,"Decision"=>Icons.Material.Outlined.AccountTree,"Api"=>Icons.Material.Outlined.Api,"Terminal"=>Icons.Material.Outlined.Terminal,"Test"=>Icons.Material.Outlined.Science,_=>Icons.Material.Outlined.Code };
 }
