@@ -1,6 +1,7 @@
 using EntraAdvisor.Guide;
 using EntraAdvisor.Guide.Contracts;
 using EntraAdvisor.Web.Services;
+using EntraAdvisor.Web.State;
 namespace EntraAdvisor.Tests;
 public sealed class WorkspaceTests
 {

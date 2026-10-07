@@ -1,0 +1,19 @@
+@inject AdvisorWorkspace W
+@inject DesignJourneyState Design
+ @if(!W.Started) {
+ <p>Select a card to continue to the design questions. Your implementation guide appears once those questions are answered.</p><fieldset><legend>What are you building?</legend><MudRadioGroup T="string" ValueChanged="SelectPreset" Class="choices topology-options">@foreach(var p in TopologyPresets.All) { <MudPaper Outlined="true" Elevation="0" Class="topology-option"><MudRadio T="string" Value="@p.Id" Color="Color.Primary"><span class="choice-body"><strong>@p.Title</strong><span>@p.Description</span><span class="use-case">Example: @p.Example</span><span class="card-action">Select and continue →</span></span></MudRadio></MudPaper> }</MudRadioGroup></fieldset>
+ } else if(Design.Screen is {} screen) {
+ <p>@screen.Section</p>@foreach(var q in screen.Questions) { <p class="question-context">@Context(q.SuppliesFact.EntityId)</p><ChoiceCards @key="q.Id" Question="q" Selected="@Design.Selected(q.Id)" SelectedChanged="value => Design.Select(q.Id, value)"/> }
+ <div class="actions"><MudButton Variant="Variant.Outlined" OnClick="Back" StartIcon="@Icons.Material.Outlined.ArrowBack">Back</MudButton><MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@screen.Questions.Any(q => Design.Selected(q.Id) is null)" OnClick="Continue" EndIcon="@Icons.Material.Outlined.ArrowForward">Continue</MudButton></div>
+ } else if(W.Session.Evaluation.Plan is not null) { <button class="primary" @onclick="() => Ready.InvokeAsync()">Open implementation →</button> }
+ @foreach(var issue in W.Session.Evaluation.Issues.Where(_ => W.Session.Evaluation.Status != EvaluationStatus.NeedsClarification)) { <div class="notice"><strong>@issue.Explanation</strong><p>@issue.NextAction</p></div> }
+
+@code {
+ [Parameter] public EventCallback Ready { get; set; }
+ [Parameter] public EventCallback<string> Changed { get; set; }
+ private string Name(string id) => W.Session.Scenario.Components.FirstOrDefault(c => c.Id == id)?.Name ?? W.Session.Scenario.Resources.FirstOrDefault(r => r.Id == id)?.Name ?? id;
+ private string Context(string id) { var r=W.Session.Scenario.Relationships.FirstOrDefault(r=>r.Id==id); return r is null ? Name(id) : Name(r.CallerComponentId)+" → "+Name(r.TargetResourceId); }
+ private async Task SelectPreset(string id) { Design.ChoosePreset(id); await Changed.InvokeAsync(""); }
+ private async Task Back() { Design.Back(); await Changed.InvokeAsync(""); }
+ private async Task Continue() { var message=Design.Continue(); if(W.Session.Evaluation.Plan is not null) await Ready.InvokeAsync(); else await Changed.InvokeAsync(message); }
+}

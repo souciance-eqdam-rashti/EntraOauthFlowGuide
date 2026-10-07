@@ -4,7 +4,7 @@ using EntraAdvisor.Engine.Questionnaire;
 using EntraAdvisor.Guide;
 using EntraAdvisor.Guide.Contracts;
 
-namespace EntraAdvisor.Web.Services;
+namespace EntraAdvisor.Web.State;
 
 public enum JourneyStage { Design, Implement }
 

@@ -1,5 +1,6 @@
 @page "/"
 @inject AdvisorWorkspace W
+@inject DesignJourneyState Design
 @inject IJSRuntime JS
 @inject IDialogService Dialogs
 @using EntraAdvisor.Guide
@@ -9,15 +10,7 @@
 <nav aria-label="Journey"><MudTabs ActivePanelIndex="@((int)W.Stage)" ActivePanelIndexChanged="index => Navigate((JourneyStage)index)" Elevation="0" Rounded="true" Class="journey-tabs"><MudTabPanel Text="Design" Icon="@Icons.Material.Outlined.Tune" /><MudTabPanel Text="Implement" Icon="@Icons.Material.Outlined.Code" Disabled="@(W.Session.Evaluation.Plan is null)" /></MudTabs></nav>
 <div class="workspace choosing-topology"><section class="work-panel">
 <p class="eyebrow">@W.Stage · Enterprise Entra identities</p><h1 tabindex="-1" @ref="heading">@Title</h1>@if(!string.IsNullOrEmpty(message)) { <p role="status" class="sr-only">@message</p> }
-@if(W.Stage == JourneyStage.Design) {
- if(!W.Started) {
- <p>Select a card to continue to the design questions. Your implementation guide appears once those questions are answered.</p><fieldset><legend>What are you building?</legend><MudRadioGroup T="string" ValueChanged="SelectPreset" Class="choices topology-options">@foreach(var p in TopologyPresets.All) { <MudPaper Outlined="true" Elevation="0" Class="topology-option"><MudRadio T="string" Value="@p.Id" Color="Color.Primary"><span class="choice-body"><strong>@p.Title</strong><span>@p.Description</span><span class="use-case">Example: @p.Example</span><span class="card-action">Select and continue →</span></span></MudRadio></MudPaper> }</MudRadioGroup></fieldset>
- } else if(screen is not null) {
- <p>@screen.Section</p>@foreach(var q in screen.Questions) { <p class="question-context">@Context(q.SuppliesFact.EntityId)</p><ChoiceCards @key="q.Id" Question="q" Selected="@Selected(q.Id)" SelectedChanged="value => drafts[q.Id] = value"/> }
- <div class="actions"><MudButton Variant="Variant.Outlined" OnClick="Back" StartIcon="@Icons.Material.Outlined.ArrowBack">Back</MudButton><MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@screen.Questions.Any(q => Selected(q.Id) is null)" OnClick="Continue" EndIcon="@Icons.Material.Outlined.ArrowForward">Continue</MudButton></div>
- } else if(W.Session.Evaluation.Plan is not null) { <button class="primary" @onclick="() => Navigate(JourneyStage.Implement)">Open implementation →</button> }
- @foreach(var issue in W.Session.Evaluation.Issues.Where(_ => W.Session.Evaluation.Status != EvaluationStatus.NeedsClarification)) { <div class="notice"><strong>@issue.Explanation</strong><p>@issue.NextAction</p></div> }
-}
+@if(W.Stage == JourneyStage.Design) { <DesignArchitecture Ready="Generate" Changed="DesignChanged" /> }
 else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} guide) {
  var step = guide.Steps[W.ActiveStep];
  <div class="implementation-layout">
@@ -55,25 +48,17 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  private ElementReference heading;
  private ElementReference stepHeading;
  private bool focusStep;
- private QuestionScreen? screen;
- private readonly Stack<QuestionScreen> history = new();
- private readonly Dictionary<string,string> drafts = new();
+
+
+
  private string message="";
  private bool focus;
 
+ private void DesignChanged(string value) { message=value; focus=true; }
  private string Title => W.Stage switch { JourneyStage.Design => "Design your architecture", _ => "Build it, one step at a time" };
- protected override void OnInitialized() => screen=W.Session.NextScreen;
  protected override async Task OnAfterRenderAsync(bool firstRender) { if(focus) { focus=false; await heading.FocusAsync(); } if(focusStep) { focusStep=false; await JS.InvokeVoidAsync("advisor.resetStepPane"); await stepHeading.FocusAsync(preventScroll:true); } }
- private string? Selected(string id) => drafts.GetValueOrDefault(id) ?? (W.Session.Answers.TryGetValue(id,out var a) ? a.SelectedOptionIds[0] : null);
- private string Context(string id) { var r=W.Session.Scenario.Relationships.FirstOrDefault(r=>r.Id==id); return r is null ? Name(id) : Name(r.CallerComponentId)+" → "+Name(r.TargetResourceId); }
  private string Name(string id) => W.Session.Scenario.Components.FirstOrDefault(c => c.Id == id)?.Name ?? W.Session.Scenario.Resources.FirstOrDefault(r => r.Id == id)?.Name ?? id;
- private void SelectPreset(string id) { if(W.Started) return; W.ChoosePreset(id); history.Clear(); drafts.Clear(); Start(); }
- private void Start() { W.Started=true; screen=W.Session.NextScreen; focus=true; }
- private void Continue() { if(screen is null) return; var prior=screen; foreach(var q in prior.Questions) if(Selected(q.Id) is {} value && QuestionCatalog.IsRelevant(q,W.Session.Scenario)) message=DescribeChange(W.Apply(new(q.Id,[value]))); history.Push(prior); drafts.Clear(); screen=W.Session.NextScreen; if(W.Session.Evaluation.Plan is not null) { Generate(); } focus=true; }
- private string DescribeChange(AnswerChangeImpact impact) => W.Guide is null ? "" : impact.Explanation;
- private void Back() { if(history.TryPop(out var prior)) { screen=prior; drafts.Clear(); } else { W.Started=false; } message=""; focus=true; }
- private void Edit(QuestionDefinition q) { W.Stage=JourneyStage.Design; screen=new(q.Section,[q]); drafts.Clear(); focus=true; }
- private void Navigate(JourneyStage stage) { if(stage == JourneyStage.Implement && !W.GuideIsCurrent) { Generate(); return; } W.Stage=stage; screen=W.Session.NextScreen; focus=true; message=""; }
+ private void Navigate(JourneyStage stage) { if(stage == JourneyStage.Implement && !W.GuideIsCurrent) { Generate(); return; } W.Stage=stage; Design.Enter(); focus=true; message=""; }
  private void Generate() { message=""; W.SetGuide(new ArchitectureGuideGenerator().Generate(W.Session.Evaluation.Plan!,new([]))); focus=true; }
  private void SelectStep(int i) { if(W.Stage != JourneyStage.Implement || !W.GuideIsCurrent || W.Guide is null || i < 0 || i >= W.Guide.Steps.Length) return; W.SelectStep(i); focusStep=true; }
  private string JourneyLabel(GuideStep step) {
@@ -85,7 +70,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  return step.Section switch { GuideSection.Prerequisites => "Prepare tenant", GuideSection.PermissionsAndConsent => "Grant access", GuideSection.TestAndTroubleshoot => "Verify flow", _ => step.Title.Replace("Create and upload two development certificates", "Certificates").Replace("Create the three projects", "Create projects").Replace("Build and run the chain", "Run chain") };
  }
  private void CompleteStep() { W.SetCompletion(CompletionState.Complete); if(W.Guide is {} g && W.ActiveStep+1 < g.Steps.Length) SelectStep(W.ActiveStep+1); }
- private void Reset() { W.Reset(); history.Clear(); drafts.Clear(); screen=W.Session.NextScreen; message=""; focus=true; }
+ private void Reset() { W.Reset(); Design.Reset(); Design.Enter(); message=""; focus=true; }
  private async Task OpenConcepts() => await Dialogs.ShowAsync<CoreConceptsDialog>("Core concepts", new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true });
  private async Task OpenDiagram() { if(W.Guide is null) return; await Dialogs.ShowAsync<DiagramOverviewDialog>("Diagram Overview", new DialogParameters { [nameof(DiagramOverviewDialog.Plan)] = W.Guide.Architecture }, new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true }); }
  private async Task CloseDiagram() => await JS.InvokeVoidAsync("advisor.closeDiagram");
