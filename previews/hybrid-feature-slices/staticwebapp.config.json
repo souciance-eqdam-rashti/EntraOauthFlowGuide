@@ -1,0 +1,7 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/_framework/*", "/_content/*", "/*.css", "/*.js", "/*.json", "/*.wasm", "/*.png", "/*.svg", "/*.ico"]
+  },
+  "mimeTypes": { ".wasm": "application/wasm" }
+}
