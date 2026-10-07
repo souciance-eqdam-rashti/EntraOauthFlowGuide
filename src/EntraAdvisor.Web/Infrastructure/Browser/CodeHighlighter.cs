@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-namespace EntraAdvisor.Web.Services;
+namespace EntraAdvisor.Web.Infrastructure.Browser;
 /// <summary>Escapes every token before adding fixed markup. No external scripts or HTML from artifacts.</summary>
 public static partial class CodeHighlighter
 {

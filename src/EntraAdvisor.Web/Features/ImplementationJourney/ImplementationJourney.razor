@@ -1,0 +1,55 @@
+@inject AdvisorWorkspace W
+@inject IJSRuntime JS
+@inject IDialogService Dialogs
+@if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} guide) {
+ var step = guide.Steps[W.ActiveStep];
+ <div class="implementation-layout">
+ <section class="implementation-step-selector" aria-label="Implementation steps">
+ <MudText Typo="Typo.overline" Class="stepper-heading">IMPLEMENTATION JOURNEY</MudText>
+ <MudStepper @key="guide.PlanId" Vertical="false" NonLinear="true" ScrollableNavigation="true" ActiveIndex="W.ActiveStep" ActiveIndexChanged="SelectStep" Class="implementation-stepper">
+ <ChildContent>@foreach(var item in guide.Steps) { <MudStep Title="@JourneyLabel(item)" /> }</ChildContent>
+ <ActionContent></ActionContent>
+ </MudStepper>
+
+ </section>
+ <MudPaper Outlined="true" Elevation="0" Class="implementation-step-pane" role="region" aria-label="Selected implementation step" id="implementation-step-pane">
+ <article><div class="step-header-meta"><p class="eyebrow">Step @(W.ActiveStep+1) · @Name(step.ComponentId)</p>@if(W.Completion[W.ActiveStep].State == CompletionState.Complete) { <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Complete</MudChip> }</div><h2 tabindex="-1" @ref="stepHeading">@step.Title</h2>@if(step.Section != GuideSection.Prerequisites && !step.Id.StartsWith("register")) { <ImplementationFlows Plan="guide.Architecture" ComponentId="@step.ComponentId" ShowLinks="false"/> }
+ <CompactStepContent Step="step" Plan="guide.Architecture"/>
+
+ <StepResources Step="step" Plan="guide.Architecture" />
+ <div class="step-completion">
+ @if(W.Completion[W.ActiveStep].State == CompletionState.Complete) {
+ @if(W.ActiveStep+1 < guide.Steps.Length) { <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SelectStep(W.ActiveStep+1)">Continue</MudButton> }
+
+ } else { <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CompleteStep">@(W.ActiveStep+1 < guide.Steps.Length ? "Mark complete and continue" : "Mark complete")</MudButton> }
+ @if(W.ActiveStep+1 < guide.Steps.Length) { <MudText Typo="Typo.caption">Next: @guide.Steps[W.ActiveStep+1].Title</MudText> }
+
+
+ </div></article></MudPaper>
+
+ </div>
+ <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"><MarkdownExportButton StatusChanged="StatusChanged" /><MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OpenDiagram" StartIcon="@Icons.Material.Outlined.AccountTree">Diagram Overview</MudButton></ValidationExport>
+
+
+
+}
+@code {
+ [Parameter] public EventCallback<string> StatusChanged { get; set; }
+ private ElementReference stepHeading;
+ private bool focusStep;
+ protected override async Task OnAfterRenderAsync(bool firstRender) {
+  if(focusStep) { focusStep=false; await JS.InvokeVoidAsync("advisor.resetStepPane"); await stepHeading.FocusAsync(preventScroll:true); }
+ }
+ private string Name(string id) => W.Session.Scenario.Components.FirstOrDefault(c => c.Id == id)?.Name ?? W.Session.Scenario.Resources.FirstOrDefault(r => r.Id == id)?.Name ?? id;
+ private void SelectStep(int i) { if(W.Stage != JourneyStage.Implement || !W.GuideIsCurrent || W.Guide is null || i < 0 || i >= W.Guide.Steps.Length) return; W.SelectStep(i); focusStep=true; }
+ private string JourneyLabel(GuideStep step) {
+ var name=Name(step.ComponentId) switch { "Backend API" => "API", "Browser App" => "browser app", "Downstream API" => "downstream API", "Web App" => "web app", var n => n };
+ if(step.Id.StartsWith("register")) return "Register " + name;
+ if(step.Id.StartsWith("configure")) return "Configure " + name;
+ if(step.Id.StartsWith("expose")) return step.Content.OfType<InstructionContent>().Any(c=>c.Text.StartsWith("Use scopes:")) ? "Define scopes" : "Define access";
+ if(step.Id.StartsWith("permission")) return "Grant access";
+ return step.Section switch { GuideSection.Prerequisites => "Prepare tenant", GuideSection.PermissionsAndConsent => "Grant access", GuideSection.TestAndTroubleshoot => "Verify flow", _ => step.Title.Replace("Create and upload two development certificates", "Certificates").Replace("Create the three projects", "Create projects").Replace("Build and run the chain", "Run chain") };
+ }
+ private void CompleteStep() { W.SetCompletion(CompletionState.Complete); if(W.Guide is {} g && W.ActiveStep+1 < g.Steps.Length) SelectStep(W.ActiveStep+1); }
+ private async Task OpenDiagram() { if(W.Guide is null) return; await Dialogs.ShowAsync<DiagramOverviewDialog>("Diagram Overview", new DialogParameters { [nameof(DiagramOverviewDialog.Plan)] = W.Guide.Architecture }, new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true }); }
+}

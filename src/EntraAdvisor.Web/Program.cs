@@ -11,5 +11,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddMudServices();
 builder.Services.AddScoped<AdvisorWorkspace>();
 builder.Services.AddScoped<DesignJourneyState>();
+builder.Services.AddScoped<EntraAdvisor.Web.Features.ImplementationJourney.GenerateGuide>();
 builder.Services.AddScoped<EntraAdvisor.Web.Infrastructure.Browser.BrowserDownload>();
 await builder.Build().RunAsync();
