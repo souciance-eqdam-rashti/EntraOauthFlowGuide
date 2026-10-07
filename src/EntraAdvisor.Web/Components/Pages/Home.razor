@@ -45,7 +45,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  </div></article></MudPaper>
 
  </div>
- <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"><MudButton Variant="Variant.Outlined" OnClick="Export" StartIcon="@Icons.Material.Outlined.FileDownload">Export Markdown</MudButton><MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OpenDiagram" StartIcon="@Icons.Material.Outlined.AccountTree">Diagram Overview</MudButton></ValidationExport>
+ <ValidationExport @key="guide.PlanId" Plan="guide.Architecture"><MarkdownExportButton StatusChanged="value => message = value" /><MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OpenDiagram" StartIcon="@Icons.Material.Outlined.AccountTree">Diagram Overview</MudButton></ValidationExport>
 
 
 
@@ -89,5 +89,4 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  private async Task OpenConcepts() => await Dialogs.ShowAsync<CoreConceptsDialog>("Core concepts", new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true });
  private async Task OpenDiagram() { if(W.Guide is null) return; await Dialogs.ShowAsync<DiagramOverviewDialog>("Diagram Overview", new DialogParameters { [nameof(DiagramOverviewDialog.Plan)] = W.Guide.Architecture }, new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true }); }
  private async Task CloseDiagram() => await JS.InvokeVoidAsync("advisor.closeDiagram");
- private async Task Export() { if(!W.GuideIsCurrent) return; var text=new MarkdownGuideExporter().ExportMarkdown(W.Guide!);  try { await JS.InvokeVoidAsync("advisor.download","entra-implementation-guide.md",text); message=""; } catch(JSException) { message="Download could not start. Please try again."; } }
 }

@@ -7,7 +7,7 @@
 @code {
     [Parameter] public RenderFragment? ChildContent {get;set;}
     [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
-    [Inject] public IJSRuntime JS {get;set;}=null!;
+    [Inject] public BrowserDownload Download {get;set;}=null!;
     [Inject] public IDialogService Dialogs {get;set;}=null!;
     private async Task OpenSetup(ProvisioningFormat format) => await Dialogs.ShowAsync<ProvisioningExportDialog>("Set up Entra",new DialogParameters { [nameof(ProvisioningExportDialog.Plan)]=Plan,[nameof(ProvisioningExportDialog.Format)]=format },new DialogOptions { MaxWidth=MaxWidth.Medium,FullWidth=true,CloseButton=true });
     private readonly ValidationScriptExporter exporter=new();
@@ -15,6 +15,6 @@
     private async Task Export(ValidationScriptFormat format) {
         var script=exporter.ExportAll(Plan,format);
         status="";
-        try {await JS.InvokeVoidAsync("advisor.download",script.FileName,script.Content);} catch(JSException) {status="Download could not start. Please try again.";}
+        try {await Download.TextAsync(script.FileName,script.Content);} catch(JSException) {status="Download could not start. Please try again.";}
     }
 }

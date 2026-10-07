@@ -14,12 +14,12 @@
 @code {
  [Parameter,EditorRequired] public OAuthPlan Plan {get;set;}=null!;
  [Parameter] public ProvisioningFormat Format {get;set;}
- [Inject] public IJSRuntime JS {get;set;}=null!;
+ [Inject] public BrowserDownload BrowserDownload {get;set;}=null!;
  private ProvisioningPlan setup=null!;
  private string status="";
  protected override void OnParametersSet()=>setup=new ProvisioningPlanBuilder().Build(Plan);
  private async Task Download(){
-  try {var bundle=new ProvisioningExporter().Export(Plan,Format);await JS.InvokeVoidAsync("advisor.downloadBytes",bundle.FileName,bundle.ToZip());status="Download started.";}
+  try {var bundle=new ProvisioningExporter().Export(Plan,Format);await BrowserDownload.BytesAsync(bundle.FileName,bundle.ToZip());status="Download started.";}
   catch(JSException){status="Download could not start. Please try again.";}
  }
 }

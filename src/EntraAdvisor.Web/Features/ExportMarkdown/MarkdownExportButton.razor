@@ -1,0 +1,22 @@
+@inject AdvisorWorkspace W
+@inject BrowserDownload Download
+@using EntraAdvisor.Guide
+<MudButton Variant="Variant.Outlined" OnClick="Export" StartIcon="@Icons.Material.Outlined.FileDownload">Export Markdown</MudButton>
+@code {
+    [Parameter] public EventCallback<string> StatusChanged { get; set; }
+
+    private async Task Export()
+    {
+        if (!W.GuideIsCurrent) return;
+        var text = new MarkdownGuideExporter().ExportMarkdown(W.Guide!);
+        try
+        {
+            await Download.TextAsync("entra-implementation-guide.md", text);
+            await StatusChanged.InvokeAsync("");
+        }
+        catch (JSException)
+        {
+            await StatusChanged.InvokeAsync("Download could not start. Please try again.");
+        }
+    }
+}
