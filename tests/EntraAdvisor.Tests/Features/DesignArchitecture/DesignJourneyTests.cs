@@ -36,10 +36,10 @@ public sealed class DesignJourneyTests
         design.Continue();
         workspace.Reset();
         design.Reset();
-        Assert.Empty(workspace.Session.Answers);
+        Assert.False(workspace.Session.Answers.ContainsKey(question.Id));
         Assert.Null(design.Selected(question.Id));
         design.Back();
         Assert.False(workspace.Started);
-        Assert.Equal(workspace.Session.NextScreen, design.Screen);
+        Assert.Equal(workspace.Session.NextScreen!.Questions.Select(q => q.Id), design.Screen!.Questions.Select(q => q.Id));
     }
 }

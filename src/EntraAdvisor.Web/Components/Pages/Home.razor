@@ -10,7 +10,7 @@
 <nav aria-label="Journey"><MudTabs ActivePanelIndex="@((int)W.Stage)" ActivePanelIndexChanged="index => Navigate((JourneyStage)index)" Elevation="0" Rounded="true" Class="journey-tabs"><MudTabPanel Text="Design" Icon="@Icons.Material.Outlined.Tune" /><MudTabPanel Text="Implement" Icon="@Icons.Material.Outlined.Code" Disabled="@(W.Session.Evaluation.Plan is null)" /></MudTabs></nav>
 <div class="workspace choosing-topology"><section class="work-panel">
 <p class="eyebrow">@W.Stage · Enterprise Entra identities</p><h1 tabindex="-1" @ref="heading">@Title</h1>@if(!string.IsNullOrEmpty(message)) { <p role="status" class="sr-only">@message</p> }
-@if(W.Stage == JourneyStage.Design) { <DesignArchitecture Ready="Generate" Changed="DesignChanged" /> }
+@if(W.Stage == JourneyStage.Design) { <DesignArchitecture Revision="journeyRevision" Ready="Generate" Changed="DesignChanged" /> }
 else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} guide) {
  var step = guide.Steps[W.ActiveStep];
  <div class="implementation-layout">
@@ -53,6 +53,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
 
  private string message="";
  private bool focus;
+ private int journeyRevision;
 
  private void DesignChanged(string value) { message=value; focus=true; }
  private string Title => W.Stage switch { JourneyStage.Design => "Design your architecture", _ => "Build it, one step at a time" };
@@ -70,7 +71,7 @@ else if(W.Stage == JourneyStage.Implement && W.GuideIsCurrent && W.Guide is {} g
  return step.Section switch { GuideSection.Prerequisites => "Prepare tenant", GuideSection.PermissionsAndConsent => "Grant access", GuideSection.TestAndTroubleshoot => "Verify flow", _ => step.Title.Replace("Create and upload two development certificates", "Certificates").Replace("Create the three projects", "Create projects").Replace("Build and run the chain", "Run chain") };
  }
  private void CompleteStep() { W.SetCompletion(CompletionState.Complete); if(W.Guide is {} g && W.ActiveStep+1 < g.Steps.Length) SelectStep(W.ActiveStep+1); }
- private void Reset() { W.Reset(); Design.Reset(); Design.Enter(); message=""; focus=true; }
+ private void Reset() { W.Reset(); Design.Reset(); journeyRevision++; message=""; focus=true; }
  private async Task OpenConcepts() => await Dialogs.ShowAsync<CoreConceptsDialog>("Core concepts", new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true });
  private async Task OpenDiagram() { if(W.Guide is null) return; await Dialogs.ShowAsync<DiagramOverviewDialog>("Diagram Overview", new DialogParameters { [nameof(DiagramOverviewDialog.Plan)] = W.Guide.Architecture }, new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true }); }
  private async Task CloseDiagram() => await JS.InvokeVoidAsync("advisor.closeDiagram");
