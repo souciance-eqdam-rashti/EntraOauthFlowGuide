@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\EntraAdvisor.Engine\EntraAdvisor.Engine.csproj" />
@@ -11,6 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Provisioning/*.ps1" />
+    <EmbeddedResource Include="Features/ExportProvisioning/Templates/*.ps1">
+      <LogicalName>EntraAdvisor.Guide.Provisioning.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>
