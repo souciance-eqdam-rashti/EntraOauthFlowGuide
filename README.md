@@ -49,3 +49,7 @@ See [engine behavior](docs/engine-behavior.md) for concrete decision examples, c
 Each minor checkpoint updates durable documentation. Each major milestone requires explicit user approval before the following milestone starts. Graph, Azure and custom resources are category-level choices; the developer supplies exact permissions/roles, and guides expose compatibility prerequisites.
 
 See [the vertical slice](docs/vertical-slice.md) for template boundaries and generated sample build commands, and [an example export](docs/evidence/milestone3-export.md) for the complete fresh-start guide. Browser session progress is temporary; export before leaving. Exports initiate browser downloads.
+
+## Developer navigation
+
+Start with [developer onboarding](docs/developer-onboarding.md). The [hybrid architecture](docs/hybrid-architecture.md) maps feature ownership, shared state, and library boundaries. See [transition checkpoints](docs/hybrid-architecture-checkpoints.md) for migration verification.

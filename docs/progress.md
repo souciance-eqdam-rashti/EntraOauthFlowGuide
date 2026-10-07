@@ -1,6 +1,10 @@
 # Implementation progress
 
-Updated: 2026-10-06.
+Updated: 2026-10-07.
+
+## Hybrid architecture transition
+
+Completed the user-authorized transition on `codex/hybrid-feature-slices`: UI/workflows organized by feature; shared browser state retained; Guide generators/exporters organized by capability; Engine evaluation remains centralized; tests/docs aligned. The app was run and basic browser behavior checked at each checkpoint. Final suite: 125 passed; all 78 captured generated artifacts unchanged; generated Web/ApiA/ApiB build cleanly; published root/subpath browser checks passed. See [checkpoint evidence](hybrid-architecture-checkpoints.md) for results, the resolved SDK publish issue, and verification limits. This refactor does not extend product milestone 4 coverage or perform tenant validation.
 
 ## Current state
 

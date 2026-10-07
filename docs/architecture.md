@@ -1,10 +1,10 @@
 # Foundation contracts and decision ordering
 
-Updated after milestone 2 — 2026-10-05. Contracts, evaluator, questionnaire model and completion invalidation are implemented. The visual journey and guide generator remain milestone 3 work.
+Current hosting and organization updated 2026-10-07. The domain contracts below originated in milestone 2; historical milestone expectations are retained as context. The visual journey and guide generators are implemented. See [hybrid architecture](hybrid-architecture.md) for current feature ownership.
 
 ## Project boundaries
 
-AppHost orchestrates Web. Web references ServiceDefaults, Engine and Guide. Guide references Engine. Engine and Guide depend only on the .NET base libraries and have no UI/Aspire dependencies. Tests reference Engine/Guide. There is no separate API or database in the MVP.
+AppHost optionally orchestrates Web locally. Web is standalone Blazor WebAssembly and references Engine and Guide, with no ServiceDefaults reference. Guide references Engine. Engine and Guide have no UI/Aspire dependencies. Tests reference Web, Engine and Guide. There is no advisor API or database; ASP.NET Core API examples are generated sample applications. Production deploys static browser assets.
 
 ## Facts and architecture
 
@@ -46,4 +46,4 @@ QuestionnaireSession applies a validated card answer, traverses dependency edges
 
 `ImplementationFacts` contains developer-supplied, sample and derived values. Exact permission names, tenant IDs, redirects and endpoints use labeled keys that stay consistent across snippets. Private keys, secrets and tokens must never enter persisted facts. `StepCompletion` is separate session-scoped user-reported state; it does not verify Entra state.
 
-Current contract schema: `1.1.0`; evaluator rule version: `1.0.0`. Schema 1.0.0 inputs remain accepted but must supply the new identity-domain fact before becoming Ready. Schema 1.1.0 adds explicit identity-domain/specialized boundaries, scenario context in the plan, component sign-in credentials, Azure resource authorization placeholders and changed-fact provenance. Templates are not yet implemented or versioned. Semantic changes require documented compatibility; never reuse old completion state across incompatible plans.
+Current contract schema: `1.1.0`; evaluator rule version: `1.0.0`. Schema 1.0.0 inputs remain accepted but must supply the new identity-domain fact before becoming Ready. Schema 1.1.0 adds explicit identity-domain/specialized boundaries, scenario context in the plan, component sign-in credentials, Azure resource authorization placeholders and changed-fact provenance. Guide templates are implemented and versioned; inspect generator TemplateVersion constants for current values. Semantic changes require documented compatibility; never reuse old completion state across incompatible plans.

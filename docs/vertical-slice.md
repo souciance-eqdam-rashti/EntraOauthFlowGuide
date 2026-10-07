@@ -2,7 +2,7 @@
 
 The default journey supports Design → Recommendation → Implement for a single workforce tenant, member users, Blazor server → API A → API B, delegated access and certificate credentials. The engine still evaluates its wider milestone 2 coverage. All ready architectures now enter Implementation with ordered configuration checklists; the original delegated chain retains its complete runnable samples. Additional runnable templates remain milestone 4 work.
 
-`AdvisorWorkspace` is circuit-scoped. It stores architecture answers and checklist state, not access tokens or credentials. Refreshing or closing the circuit loses session state; Markdown includes a completion record for reference. Reopening a completed prerequisite clears dependent confirmations. Changing an architectural answer removes stale recommendations and resets affected guide steps; regenerating never revives invalidated completion.
+`AdvisorWorkspace` is scoped to the running standalone browser app. It stores architecture answers and checklist state, not access tokens or credentials. Refreshing or closing the browser app loses session state; Markdown includes a completion record for reference. Reopening a completed prerequisite clears dependent confirmations. Changing an architectural answer removes stale recommendations and resets affected guide steps; regenerating never revives invalidated completion.
 
 `DelegatedChainGuideGenerator` re-evaluates the scenario and compares the entire plan before generation. It emits typed steps and complete project artifacts from one source template. The UI and `MarkdownGuideExporter` consume that same content. Deployment values remain labeled `__PLACEHOLDERS__`; the advisor does not create registrations, generate private keys or grant consent.
 
@@ -34,3 +34,7 @@ Reviewed 2026-10-05: [certificate configuration](https://learn.microsoft.com/en-
 
 The initial topology picker uses a light theme, concise real-world examples and immediate navigation into relevant Design questions. Required facts must still be answered before Recommendation is available. The architecture sidebar is hidden until implementation; later it tracks resource calls and highlights the component being configured. It remains collapsible on narrow screens. These are milestone 3 refinements, not approval to begin milestone 4.
 
+
+## Current source locations
+
+The runnable chain generator and templates are in src/EntraAdvisor.Guide/Features/GenerateDelegatedChain. This document describes a complete product capability; the advisor now organizes UI/workflows by feature as described in [hybrid architecture](hybrid-architecture.md).
